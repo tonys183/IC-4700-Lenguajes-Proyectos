@@ -23,7 +23,7 @@
       ((list? A) (append (nivel (cadr A) (- n 1)) (nivel (caddr A) (- n 1))))
       (else (list)))))
 
-;--- Nivel ---;
+;--- Elemento en Índice ---;
 ; Dominio:
 ; Codominio:
 (define elementoEn
