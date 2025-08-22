@@ -2,6 +2,7 @@
 
 ;==== Funciones auxiliares ====;
 
+;----- Manejo de arboles ----;
 ;--- Altura ---;
 ; Dominio:
 ; Codominio:
@@ -23,7 +24,7 @@
       ((list? A) (append (nivel (cadr A) (- n 1)) (nivel (caddr A) (- n 1))))
       (else (list)))))
 
-;--- Elemento en Índice ---;
+;--- Manejo de listas ---;
 ; Dominio:
 ; Codominio:
 (define elementoEn
@@ -31,6 +32,31 @@
     (cond
       ((zero? n) (car L))
       (else (elementoEn (cdr L) (- n 1))))))
+
+(define pop
+  (lambda (L)
+    (cond
+      ( (or (null? (cdr L)) (null? L) ) '())
+      (else (cons (car L) (pop (cdr L)) ) ))))
+
+(define top
+  (lambda (L)
+    (cond
+      ((null? (cdr L)) (car L))
+      (else (top (cdr L) )))))
+
+;--- Auxiliares Números ---
+
+(define precisionK
+  (lambda(n k)
+   (/ (round (* n (expt 10 k))) (expt 10 k))))
+
+(define realRand
+  (lambda()
+    (cond
+    ((< (random) 0.25) (precisionK (* -1 (* (random) (expt 10 (floor (* (random) 10))))) 6))
+    (else (precisionK (* (random) (expt 10 (floor (* (random) 10)))) 6)))))
+  
 
 
 ;--- Válidación de Operaciones ---;
@@ -158,6 +184,32 @@
 
 ;==== Auxiliares para Mutación ====;
 
+
+;---Elegir elemento de hoja random---;
+(define elegirHoja
+  (lambda(A ruta)
+    (cond
+      ((or (null? A) (not (list? A))) (cons A ruta ))
+      ((< (random) 0.5 ) (cons 0 (elegirHoja (cadr A) ruta)))
+      (else  (cons 1 (elegirHoja (caddr A) ruta)))
+      )))
+
+; --- Meter un valor al arbol---;
+
+(define cambiarElemento
+  (lambda(A R e)
+  (cond
+    ((null? R) e)
+    ((= 0 (car R)) (list (car A) (cambiarElemento (cadr A) (cdr R) e ) (caddr A)))
+    (else (list (car A) (cadr A) (cambiarElemento (caddr A) (cdr R) e)))
+  )))
+
+
+(define swapHojas
+  (lambda(A R1 R2)
+    (cambiarElemento (cambiarElemento A (pop R2) (top R1)) (pop R1) (top R2))
+  ))
+
 ;--- Cambiar Operador ---;
 (define cambiarOp
   (lambda (A nvl op)
@@ -187,6 +239,7 @@
 
 
 ;==== Probar Funciones ====;
+
 (define arbol-completo '(+ (* (/ 10 y) (loga_b 8 2)) (** x 2)))
 
 ;--- Datos ---;
@@ -197,7 +250,12 @@
 (define hojas (filter number? (nivel arbol-completo nivelHojas)))
 (define hojaRand (elementoEn hojas (random (length hojas))))
 
-
+(define elegirNumRand
+  (lambda(A)
+    (elementoEn (filter number? (nivel A (altura A))) 
+          (random (length (filter number? (nivel A (altura A))))) )
+        ))
+        
 ;--- Funciones ---;
 ;(cambiarNum arbol-completo nivelHojas 5 hojaRand)
 ;(cambiarOp arbol-completo 1 '+)
@@ -214,21 +272,27 @@
 ;--- Supermutar ---;
 (define supermutar
   (lambda (A p)
-    (cond
-    )))
+    (random)))
+
 
 ;--- Mutar ---;
 (define mutar
   (lambda (A p)
     (cond
-      ;((< p 0.25) (tratar-hojas (filter (lambda(x) (number? x)) (nivel A (altura A))) A))
+      ((< p 0.25) (cambiarOp A (random (altura A)) (elementoEn opsPosibles (random (length opsPosibles))) ))
+      ((< p 0.5) (cambiarNum A (altura A) (realRand) (elegirNumRand A)))
+      ((< p 0.75) (swapHojas A (elegirHoja A '()) (elegirHoja A '())))
+      (else (cambiarOp (cambiarNum A (altura A) (realRand) (elegirNumRand A)) (random (altura A)) (elementoEn opsPosibles (random (length opsPosibles)))))
     )))
 
+
+(mutar arbol-completo (random))
+
+
 ;--- Cruce ---;
-(define cruce
+(define cruces
   (lambda (A B)
     (cond
-      ;((< (random) 0.05) (mutar (list (car A) (cdr A) (cddr B)) (random))) ;mutación
-      ;((< (random) 0.01) (supermutar
-      ;((else (list (car A) (cdr A) (cddr B))))
-    )))
+      ((< (random) 0.01) (supermutar (list (car A) (cdr A) (cddr B))))
+      ((< (random) 0.05) (mutar (list (car A) (cdr A) (cddr B)) (random))) 
+      (else (list (car A) (cdr A) (cddr B))))))
