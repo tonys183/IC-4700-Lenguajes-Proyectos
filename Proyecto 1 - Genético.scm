@@ -1,26 +1,39 @@
 #lang scheme
 
-;--- Manejo de árboles ---;
+;==== Funciones auxiliares ====;
+
+;--- Altura ---;
 ; Dominio:
 ; Codominio:
-
 (define altura
   (lambda (A)
     (cond
       ((null? A) -1)
-      (else (+ 1 (max (altura (cdr A)) (altura (cddr A))))))))
+      ((not (list? A)) 0)
+      (else (+ 1 (max (altura (cadr A)) (altura (caddr A))))))))
 
+;--- Nivel ---;
+; Dominio:
+; Codominio:
 (define nivel
   (lambda (A n)
     (cond
       ((null? A) (list))
-      ((zero? n) (list (car A)))
-      (else (append (nivel (cdr A) (- n 1)) (nivel (cddr A) (- n 1)))))))
+      ((zero? n) (list car A))
+      ((list? A) (append (nivel (cadr A) (- n 1)) (nivel (caddr A) (- n 1))))
+      (else (list)))))
+
+;--- Nivel ---;
+; Dominio:
+; Codominio:
+(define elementoEn
+  (lambda (L n)
+    (cond
+      ((zero? n) (car L))
+      (else (elementoEn (cdr L) (- n 1))))))
 
 
-
-
-;--- Válidación de  operaciones ---;
+;--- Válidación de Operaciones ---;
 
 (define divValida
   (lambda (a b)
@@ -106,7 +119,7 @@
 
 
 
-;--- Proceso Genético ---
+;--- Proceso Genético ---;
 
 (define cercaniaXYZ 
   (lambda (A)
@@ -121,16 +134,11 @@
                              (else (expt (- (caddr p) (evalArbol A (car p) (cadr p))) 2)))) pts))))))
 
 
-
-
-
 (define totalGen
   (lambda (difs) ;Lista de cercaniaXYZ de todos los individuos
     (apply + (map (lambda (d) (cond
                                   ((equal? d 'error) (/ 1 1000))
                                   (else (/ 1 (+ 1 d))))) difs))))
-
-
 
 (define fitness
   (lambda (difs total)
@@ -139,55 +147,88 @@
                       (else (/ (/ 1 (+ 1 d)) total)))) difs)))
 
 
-;(apply + (fitness '(error 11.34 21.38 12.123 56.93 12.21 11.56) 0.3755023920535431))
-
-(define indiv '(A B C D E F G))
-(define fits (fitness '(error 11.34 21.38 12.123 56.93 12.21 11.56) 0.3755023920535431))
-
 (define escogerElite
   (lambda (S F max)
     (cond
       ((= (car F) max) (car S))
       (else (escogerElite (cdr S) (cdr F) max)))))
 
-(escogerElite indiv fits (apply max fits))
 
 
 
+;==== Auxiliares para Mutación ====;
+
+;--- Cambiar Operador ---;
 (define cambiarOp
   (lambda (A nvl op)
     (cond
       ((null? A) A)
       ((zero? nvl) (list op (cadr A) (caddr A)))
-      ((and (not (member (cadr A) opsPosibles equal?)) (not (member (caddr A) opsPosibles equal?))) 
+      ((and (not (list? (cadr A))) (not (list? (caddr A))) 
+            (not (member (cadr A) opsPosibles equal?)) (not (member (caddr A) opsPosibles equal?)))
         (list op (cadr A) (caddr A)))
-      ((<= (random) 0.5) (list (car A) (cambiarOp (cadr A) (- nvl 1) op) (caddr A) ))
+      ((<= (random) 0.5) (list (car A) (cambiarOp (cadr A) (- nvl 1) op) (caddr A)))
       (else (list (car A) (cadr A) (cambiarOp (caddr A) (- nvl 1) op)))
     )))
-      
-(define arbol-completo
-  '(+
-     (* (/ 10 y) (loga_b 8 2))
-     (** x 2)
-     ))
-
-    (cambiarOp arbol-completo 1 '+)
 
 
+;--- Cambiar Número ---;
+(define cambiarNum
+  (lambda (A nvl nuevoNum hoja)
+  (cond 
+      ((null? A) A)
+      ((zero? nvl) (cond ((equal? A hoja) nuevoNum) 
+                         (else A)))
+      ((list? A) (list (car A) (cambiarNum (cadr A) (- nvl 1) nuevoNum hoja) 
+                               (cambiarNum (caddr A) (- nvl 1) nuevoNum hoja)))
+      (else A))))
+
+
+
+
+;==== Probar Funciones ====;
+(define arbol-completo '(+ (* (/ 10 y) (loga_b 8 2)) (** x 2)))
+
+;--- Datos ---;
+(define indiv '(A B C D E F G))
+(define fits (fitness '(error 11.34 21.38 12.123 56.93 12.21 11.56) 0.3755023920535431))
+
+(define nivelHojas (altura arbol-completo))
+(define hojas (filter number? (nivel arbol-completo nivelHojas)))
+(define hojaRand (elementoEn hojas (random (length hojas))))
+
+
+;--- Funciones ---;
+;(cambiarNum arbol-completo nivelHojas 5 hojaRand)
+;(cambiarOp arbol-completo 1 '+)
+
+
+;(apply + (fitness '(error 11.34 21.38 12.123 56.93 12.21 11.56) 0.3755023920535431))
+;(escogerElite indiv fits (apply max fits))
+
+
+
+
+;==== Por Implementar ====;
+
+;--- Supermutar ---;
+(define supermutar
+  (lambda (A p)
+    (cond
+    )))
+
+;--- Mutar ---;
 (define mutar
   (lambda (A p)
     (cond
-      ((< p 0.25) (tratar-hojas (filter (lambda(x) (number? x)) (nivel A (altura A))) A))
+      ;((< p 0.25) (tratar-hojas (filter (lambda(x) (number? x)) (nivel A (altura A))) A))
     )))
 
-
-
+;--- Cruce ---;
 (define cruce
   (lambda (A B)
     (cond
-      ((< (random) 0.05) (mutar (list (car A) (cdr A) (cddr B)) (random))) ;mutación
-      ((< (random) 0.01) (supermutar
-      ((else (list (car A) (cdr A) (cddr B)))))))
-       
-
-    
+      ;((< (random) 0.05) (mutar (list (car A) (cdr A) (cddr B)) (random))) ;mutación
+      ;((< (random) 0.01) (supermutar
+      ;((else (list (car A) (cdr A) (cddr B))))
+    )))
