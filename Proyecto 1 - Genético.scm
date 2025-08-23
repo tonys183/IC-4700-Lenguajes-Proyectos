@@ -30,8 +30,7 @@
   (lambda(A)
     (cond
       ((or (null? A) (not (list? A))) A)
-      (else (list (car A) (recons-inv-Arb (caddr A)) (recons-inv-Arb (cadr A))))
-      )))
+      (else (list (car A) (recons-inv-Arb (caddr A)) (recons-inv-Arb (cadr A)))))))
 
 ;--- Elemento en Índice ---;
 ; Dominio:
@@ -67,8 +66,7 @@
   (lambda(L n)
     (cond
       ((or (null? L) (zero? n)) '())
-      (else (cons (car L) (primeros-n (cdr L) (- n 1))))
-    )))
+      (else (cons (car L) (primeros-n (cdr L) (- n 1)))))))
 
 ;--- X ---;
 ; Dominio:
@@ -241,8 +239,7 @@
 (define elegirNumRand
   (lambda(A)
     (elementoEn (filter number? (nivel A (altura A))) 
-          (random (length (filter number? (nivel A (altura A))))) )
-        ))
+          (random (length (filter number? (nivel A (altura A))))))))
 
 ;--- X ---;
 ; Dominio:
@@ -250,10 +247,9 @@
 (define elegirHoja
   (lambda(A ruta)
     (cond
-      ((or (null? A) (not (list? A))) (cons A ruta ))
+      ((or (null? A) (not (list? A))) (cons A ruta))
       ((< (random) 0.5 ) (cons 0 (elegirHoja (cadr A) ruta)))
-      (else  (cons 1 (elegirHoja (caddr A) ruta)))
-      )))
+      (else (cons 1 (elegirHoja (caddr A) ruta))))))
 
 ;--- Meter un valor al árbol ---;
 ; Dominio:
@@ -263,16 +259,14 @@
   (cond
     ((null? R) e)
     ((= 0 (car R)) (list (car A) (cambiarElemento (cadr A) (cdr R) e ) (caddr A)))
-    (else (list (car A) (cadr A) (cambiarElemento (caddr A) (cdr R) e)))
-  )))
+    (else (list (car A) (cadr A) (cambiarElemento (caddr A) (cdr R) e))))))
 
 ;--- X ---;
 ; Dominio:
 ; Codominio:
 (define swapHojas
   (lambda(A R1 R2)
-    (cambiarElemento (cambiarElemento A (pop R2) (top R1)) (pop R1) (top R2))
-  ))
+    (cambiarElemento (cambiarElemento A (pop R2) (top R1)) (pop R1) (top R2))))
 
 ;--- Cambiar Operador ---;
 ; Dominio:
@@ -286,20 +280,19 @@
             (not (member (cadr A) opsPosibles equal?)) (not (member (caddr A) opsPosibles equal?)))
         (list op (cadr A) (caddr A)))
       ((<= (random) 0.5) (list (car A) (cambiarOp (cadr A) (- nvl 1) op) (caddr A)))
-      (else (list (car A) (cadr A) (cambiarOp (caddr A) (- nvl 1) op)))
-    )))
+      (else (list (car A) (cadr A) (cambiarOp (caddr A) (- nvl 1) op))))))
 
 ;--- X ---;
 ; Dominio:
 ; Codominio:
 (define cambiarNum
   (lambda (A nvl nuevoNum hoja)
-  (cond 
+    (cond 
       ((null? A) A)
       ((zero? nvl) (cond ((equal? A hoja) nuevoNum) 
-                         (else A)))
+                          (else A)))
       ((list? A) (list (car A) (cambiarNum (cadr A) (- nvl 1) nuevoNum hoja) 
-                               (cambiarNum (caddr A) (- nvl 1) nuevoNum hoja)))
+                                (cambiarNum (caddr A) (- nvl 1) nuevoNum hoja)))
       (else A))))
 
 ;--- X ---;
@@ -309,18 +302,18 @@
   (lambda(A ruta)
     (cond
       ((null? A) '()) 
-      ((null? ruta) (cond ((< (random) 0.50) (realRand)) ((< (random) 0.75) 'y)  (else 'x)))
-      ((= 0 (car ruta)) (list (car A)  (quitar-rama-aux (cadr A) (cdr ruta)) (caddr A)))
-      (else (list (car A) (cadr A) (quitar-rama-aux (caddr A) (cdr ruta))) )
-    )))
+      ((null? ruta) (cond ((< (random) 0.50) (realRand)) 
+                          ((< (random) 0.75) 'y)
+                          (else 'x)))
+      ((= 0 (car ruta)) (list (car A) (quitar-rama-aux (cadr A) (cdr ruta)) (caddr A)))
+      (else (list (car A) (cadr A) (quitar-rama-aux (caddr A) (cdr ruta)))))))
 
 ;--- X ---;
 ; Dominio:
 ; Codominio:
 (define quitar-rama
   (lambda(A ruta)
-  (quitar-rama-aux A (primeros-n ruta (+ 1 (random (- (length ruta) 2))) ) )
-))
+    (quitar-rama-aux A (primeros-n ruta (+ 1 (random (- (length ruta) 2)))))))
 
 ;--- X ---;
 ; Dominio:
@@ -328,10 +321,9 @@
 (define pegar-subArbol
   (lambda(A ruta)
     (cond 
-      ((null? ruta) (arbol-aleatorio  (+ 1 (random  3)) (+ 1 (random  2))))
-      ((zero? (car ruta )) (list (car A) (pegar-subArbol  (cadr A) (cdr ruta)) (caddr A)))
-      (else (list (car A) (cadr A) (pegar-subArbol  (caddr A) (cdr ruta))))
-    )))
+      ((null? ruta) (arbol-aleatorio (+ 1 (random 3)) (+ 1 (random 2))))
+      ((zero? (car ruta)) (list (car A) (pegar-subArbol (cadr A) (cdr ruta)) (caddr A)))
+      (else (list (car A) (cadr A) (pegar-subArbol (caddr A) (cdr ruta)))))))
 
 
 
@@ -345,8 +337,7 @@
     (cond
       ((< p 0.25) (quitar-rama A (elegirHoja A '()))) ; Agarra una rama y la remplaza por un valor 'x,'y o n / n <- R
       ((< p 0.5) (recons-inv-Arb A)) ; Cambia cada valor, y cada rama derecha por su izquierda, y viceveresa.
-      (else (pegar-subArbol A (pop (elegirHoja  A '())))) ; Añade un arbol aletorio al arbol, remplaza una hoja para hacerlo.
-    )))
+      (else (pegar-subArbol A (pop (elegirHoja  A '()))))))) ; Añade un arbol aletorio al arbol, remplaza una hoja para hacerlo.
 
 ;--- Mutar ---;
 ; Dominio:
@@ -357,8 +348,9 @@
       ((< p 0.25) (cambiarOp A (random (altura A)) (elementoEn opsPosibles (random (length opsPosibles))) ))
       ((< p 0.5) (cambiarNum A (altura A) (realRand) (elegirNumRand A)))
       ((< p 0.75) (swapHojas A (elegirHoja A '()) (elegirHoja A '())))
-      (else (cambiarOp (cambiarNum A (altura A) (realRand) (elegirNumRand A)) (random (altura A)) (elementoEn opsPosibles (random (length opsPosibles)))))
-    )))
+      (else (cambiarOp (cambiarNum A (altura A) (realRand) (elegirNumRand A)) 
+                       (random (altura A)) 
+                       (elementoEn opsPosibles (random (length opsPosibles))))))))
 
 ;--- Cruce ---;
 ; Dominio:
@@ -381,8 +373,7 @@
     (cond
         ((< p 0.33334) (realPositiveRand) ) ; Solo positivos para evitar las indefiniciones por completo.
         ((< p 0.66667) 'x)
-        (else 'y)
-    )))
+        (else 'y))))
 
 ;--- X ---;
 ; Dominio:
@@ -391,8 +382,7 @@
   (lambda(n)
     (cond
       ((zero? n) (hoja-aleatoria (random)))
-      (else (list (elementoEn opsPosibles (random (length opsPosibles))) (arbol-altura-n (- n 1)) (arbol-altura-n (- n 1))))
-    )))
+      (else (list (elementoEn opsPosibles (random (length opsPosibles))) (arbol-altura-n (- n 1)) (arbol-altura-n (- n 1)))))))
 
 ;--- X ---;
 ; Dominio:
@@ -401,8 +391,7 @@
   (lambda(n m) ; n es la cantidad de subarboles que quiero, m es la altura maxima de cada subarbol m<-N ^ m<-[1,+oo[. (m!=0).
     (cond
       ((= n 1) (arbol-altura-n (+ 1 (random m))))
-      (else (list (elementoEn opsPosibles (random (length opsPosibles))) (arbol-aleatorio (- n 1) m) (arbol-aleatorio (- n 1) m)))
-))) 
+      (else (list (elementoEn opsPosibles (random (length opsPosibles))) (arbol-aleatorio (- n 1) m) (arbol-aleatorio (- n 1) m)))))) 
 
 
 
@@ -414,8 +403,7 @@
   (lambda (n)
     (cond
       ((zero? n) '())
-      (else (cons (arbol-aleatorio  (+ 1 (random  5)) (+ 1 (random  7))) (generarPoblacion  (- n 1))))
-    )))
+      (else (cons (arbol-aleatorio (+ 1 (random 5)) (+ 1 (random 7))) (generarPoblacion (- n 1)))))))
 
 
 
