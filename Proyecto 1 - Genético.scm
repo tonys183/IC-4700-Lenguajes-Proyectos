@@ -76,6 +76,11 @@
     ((< (random) 0.25) (precisionK (* -1 (* (random) (expt 10 (floor (* (random) 10))))) 6))
     (else (precisionK (* (random) (expt 10 (floor (* (random) 10)))) 6)))))
   
+(define realPositiveRand
+  (lambda()
+    (precisionK (* (random) (expt 10 (floor (* (random) 10)))) 6)))
+  
+
 
 
 ;--- Válidación de Operaciones ---;
@@ -271,37 +276,36 @@
   (quitar-rama-aux A (primeros-n ruta (+ 1 (random (- (length ruta) 2))) ) )
 ))
 
-;==== Probar Funciones ====;
-
-(define arbol-completo '(+ (* (/ 10 y) (loga_b 8 2)) (** x 2)))
-
-;--- Datos ---;
-(define indiv '(A B C D E F G))
-(define fits (fitness '(error 11.34 21.38 12.123 56.93 12.21 11.56) 0.3755023920535431))
-
-(define nivelHojas (altura arbol-completo))
-(define hojas (filter number? (nivel arbol-completo nivelHojas)))
-(define hojaRand (elementoEn hojas (random (length hojas))))
-
-(define elegirNumRand
-  (lambda(A)
-    (elementoEn (filter number? (nivel A (altura A))) 
-          (random (length (filter number? (nivel A (altura A))))) )
-        ))
-        
-;--- Funciones ---;
-;(cambiarNum arbol-completo nivelHojas 5 hojaRand)
-;(cambiarOp arbol-completo 1 '+)
-
-
-;(apply + (fitness '(error 11.34 21.38 12.123 56.93 12.21 11.56) 0.3755023920535431))
-;(escogerElite indiv fits (apply max fits))
 
 
 
+; ==== GENERACION ALEATORIA DE ARBOLES === ;
+
+(define hoja-aleatoria
+  (lambda(p)
+    (cond
+        ((< p 0.33334) (realPositiveRand) ) ; Solo positivos para evitar las indefiniciones por completo.
+        ((< p 0.66667) 'x)
+        (else 'y)
+    )))
+
+(define arbol-altura-n 
+  (lambda(n)
+    (cond
+      ((zero? n) (hoja-aleatoria (random)))
+      (else (list (elementoEn opsPosibles (random (length opsPosibles))) (arbol-altura-n (- n 1)) (arbol-altura-n (- n 1))))
+    )))
+
+(define arbol-aleatorio
+  (lambda(n m) ; n es la cantidad de subarboles que quiero, m es la altura maxima de cada subarbol m<-N ^ m<-[1,+oo[. (m!=0).
+    (cond
+      ((= n 1) (arbol-altura-n (+ 1 (random m))))
+      (else (list (elementoEn opsPosibles (random (length opsPosibles))) (arbol-aleatorio (- n 1) m) (arbol-aleatorio (- n 1) m)))
+))) 
 
 
-;==== Por Implementar ====;
+
+;==== Mutaciones y cruces ====;
 
 ;--- Supermutar ---;
 (define supermutar
@@ -335,4 +339,37 @@
       (else (list (car A) (cdr A) (cddr B))))))
 
 
+;==== Probar Funciones ====;
 
+(define arbol-completo '(+ (* (/ 10 y) (loga_b 8 2)) (** x 2)))
+
+;--- Datos ---;
+(define indiv '(A B C D E F G))
+(define fits (fitness '(error 11.34 21.38 12.123 56.93 12.21 11.56) 0.3755023920535431))
+
+(define nivelHojas (altura arbol-completo))
+(define hojas (filter number? (nivel arbol-completo nivelHojas)))
+(define hojaRand (elementoEn hojas (random (length hojas))))
+
+(define elegirNumRand
+  (lambda(A)
+    (elementoEn (filter number? (nivel A (altura A))) 
+          (random (length (filter number? (nivel A (altura A))))) )
+        ))
+        
+;--- Funciones ---;
+;(cambiarNum arbol-completo nivelHojas 5 hojaRand)
+;(cambiarOp arbol-completo 1 '+)
+
+
+;(apply + (fitness '(error 11.34 21.38 12.123 56.93 12.21 11.56) 0.3755023920535431))
+;(escogerElite indiv fits (apply max fits))
+
+
+
+
+
+
+;==== Población ====;
+
+(arbol-aleatorio (+ 1 (random  5)) (+ 1 (random  3)))
