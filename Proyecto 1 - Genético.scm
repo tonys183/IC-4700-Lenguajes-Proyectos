@@ -1,8 +1,7 @@
 #lang scheme
 
-;==== Funciones auxiliares ====;
+;==== FUNCIONES AUXILIARES ====
 
-;---- & Manejo de arboles & ----;
 ;--- Altura ---;
 ; Dominio:
 ; Codominio:
@@ -25,7 +24,8 @@
       (else (list)))))
 
 ;--- Reconstruir ---;
-
+; Dominio:
+; Codominio:
 (define recons-inv-Arb
   (lambda(A)
     (cond
@@ -33,9 +33,7 @@
       (else (list (car A) (recons-inv-Arb (caddr A)) (recons-inv-Arb (cadr A))))
       )))
 
-
-
-;---- & Manejo de listas &- ---;
+;--- Elemento en Índice ---;
 ; Dominio:
 ; Codominio:
 (define elementoEn
@@ -44,18 +42,27 @@
       ((zero? n) (car L))
       (else (elementoEn (cdr L) (- n 1))))))
 
+;--- X ---;
+; Dominio:
+; Codominio:
 (define pop
   (lambda (L)
     (cond
-      ( (or (null? (cdr L)) (null? L) ) '())
-      (else (cons (car L) (pop (cdr L)) ) ))))
+      ((or (null? (cdr L)) (null? L) ) '())
+      (else (cons (car L) (pop (cdr L)) )))))
 
+;--- X ---;
+; Dominio:
+; Codominio:
 (define top
   (lambda (L)
     (cond
       ((null? (cdr L)) (car L))
       (else (top (cdr L) )))))
 
+;--- X ---;
+; Dominio:
+; Codominio:
 (define primeros-n
   (lambda(L n)
     (cond
@@ -63,35 +70,45 @@
       (else (cons (car L) (primeros-n (cdr L) (- n 1))))
     )))
 
- 
-;--- Auxiliares Números ---
-
+;--- X ---;
+; Dominio:
+; Codominio:
 (define precisionK
   (lambda(n k)
    (/ (round (* n (expt 10 k))) (expt 10 k))))
 
+;--- X ---;
+; Dominio:
+; Codominio:
 (define realRand
   (lambda()
     (cond
     ((< (random) 0.25) (precisionK (* -1 (* (random) (expt 10 (floor (* (random) 10))))) 6))
     (else (precisionK (* (random) (expt 10 (floor (* (random) 10)))) 6)))))
-  
+
+;--- X ---;
+; Dominio:
+; Codominio:
 (define realPositiveRand
   (lambda()
     (precisionK (* (random) (expt 10 (floor (* (random) 10)))) 6)))
-  
 
 
 
-;--- Válidación de Operaciones ---;
+;==== OPERACIONES ====;
 
+;--- X ---;
+; Dominio:
+; Codominio:
 (define divValida
   (lambda (a b)
     (cond
       ((= b 0) 'error)
       (else (/ a b)))))
 
-
+;--- X ---;
+; Dominio:
+; Codominio:
 (define expValida
   (lambda (b e)
     (cond
@@ -102,17 +119,16 @@
             (else (- (expt (- b) e)))))
       (else (expt b e)))))
 
+;--- X ---;
+; Dominio:
+; Codominio:
 (define logValido
   (lambda (a b)
     (cond
       ((or (< a 0) (<= b 1)) 'error)
       (else (/ (log a) (log b))))))
 
-
-
-
-  
-;--- Definición de operadores ---;
+;--- Definición de Operadores ---;
 (define opsValidas (list
                     (cons '+ +)
                     (cons '- -)
@@ -121,20 +137,21 @@
                     (cons 'loga_b logValido)
                     (cons '** expValida)))
 
-
-
-
-;--- Puntos y Operaciones Posibles ---
-
-(define pts '((0 1 4) (1 3 5) (2 5 6)))
+;--- Operaciones Posibles ---;
 (define opsPosibles '('+ '- '* '/ 'loga_b '**))
 
 
-;--- SET ---
+;==== SET ====;
 
+;--- X ---;
+; Dominio:
+; Codominio:
 (define crearSet
   (lambda () (list)))
 
+;--- X ---;
+; Dominio:
+; Codominio:
 (define insertarSet
   (lambda (S x)
     (cond
@@ -143,17 +160,20 @@
 
 
 
+;==== MANEJO DE INDIVIDUOS ====;
 
-
-;--- Manejo de Individuos ---
-
+;--- X ---;
+; Dominio:
+; Codominio:
 (define evalOps
   (lambda (paramOp op)
     (cond
       ((member 'error paramOp equal?) 'error)
       (else (apply op paramOp)))))
 
-
+;--- X ---;
+; Dominio:
+; Codominio:
 (define evalArbol
   (lambda (arbol x y)
     (cond
@@ -167,11 +187,12 @@
 
 
 
+;==== PROCESO GENÉTICO ====;
 
-
-;--- Proceso Genético ---;
-
-(define cercaniaXYZ 
+;--- X ---;
+; Dominio:
+; Codominio:
+(define cercaniaXYZ
   (lambda (A)
     (cond
       ((member 'error (map (lambda (p)
@@ -183,20 +204,27 @@
                              ((eq? 'error (evalArbol A (car p) (cadr p))) 'error)
                              (else (expt (- (caddr p) (evalArbol A (car p) (cadr p))) 2)))) pts))))))
 
-
+;--- X ---;
+; Dominio:
+; Codominio:
 (define totalGen
   (lambda (difs) ;Lista de cercaniaXYZ de todos los individuos
     (apply + (map (lambda (d) (cond
                                   ((equal? d 'error) (/ 1 1000))
                                   (else (/ 1 (+ 1 d))))) difs))))
 
+;--- X ---;
+; Dominio:
+; Codominio:
 (define fitness
   (lambda (difs total)
     (map (lambda (d) (cond
                       ((equal? d 'error) (/ (/ 1 1000) total))
                       (else (/ (/ 1 (+ 1 d)) total)))) difs)))
 
-
+;--- X ---;
+; Dominio:
+; Codominio:
 (define escogerElite
   (lambda (S F max)
     (cond
@@ -205,17 +233,20 @@
 
 
 
+;==== AUXILIARES MUTACIÓN ====;
 
-;==== Auxiliares para Mutación ====;
-
-;--- Elegir un numero random de las hojas---;
+;--- Número random de las hojas ---;
+; Dominio:
+; Codominio:
 (define elegirNumRand
   (lambda(A)
     (elementoEn (filter number? (nivel A (altura A))) 
           (random (length (filter number? (nivel A (altura A))))) )
         ))
 
-;---Elegir elemento de hoja random---;
+;--- X ---;
+; Dominio:
+; Codominio:
 (define elegirHoja
   (lambda(A ruta)
     (cond
@@ -224,8 +255,9 @@
       (else  (cons 1 (elegirHoja (caddr A) ruta)))
       )))
 
-; --- Meter un valor al arbol---;
-
+;--- Meter un valor al árbol ---;
+; Dominio:
+; Codominio:
 (define cambiarElemento
   (lambda(A R e)
   (cond
@@ -234,13 +266,17 @@
     (else (list (car A) (cadr A) (cambiarElemento (caddr A) (cdr R) e)))
   )))
 
-
+;--- X ---;
+; Dominio:
+; Codominio:
 (define swapHojas
   (lambda(A R1 R2)
     (cambiarElemento (cambiarElemento A (pop R2) (top R1)) (pop R1) (top R2))
   ))
 
 ;--- Cambiar Operador ---;
+; Dominio:
+; Codominio:
 (define cambiarOp
   (lambda (A nvl op)
     (cond
@@ -253,8 +289,9 @@
       (else (list (car A) (cadr A) (cambiarOp (caddr A) (- nvl 1) op)))
     )))
 
-
-;--- Cambiar Número ---;
+;--- X ---;
+; Dominio:
+; Codominio:
 (define cambiarNum
   (lambda (A nvl nuevoNum hoja)
   (cond 
@@ -265,9 +302,9 @@
                                (cambiarNum (caddr A) (- nvl 1) nuevoNum hoja)))
       (else A))))
 
-
-;==== Auxiliares para Supermutación ====;
-
+;--- X ---;
+; Dominio:
+; Codominio:
 (define quitar-rama-aux
   (lambda(A ruta)
     (cond
@@ -277,12 +314,17 @@
       (else (list (car A) (cadr A) (quitar-rama-aux (caddr A) (cdr ruta))) )
     )))
 
+;--- X ---;
+; Dominio:
+; Codominio:
 (define quitar-rama
   (lambda(A ruta)
   (quitar-rama-aux A (primeros-n ruta (+ 1 (random (- (length ruta) 2))) ) )
 ))
 
-
+;--- X ---;
+; Dominio:
+; Codominio:
 (define pegar-subArbol
   (lambda(A ruta)
     (cond 
@@ -291,35 +333,13 @@
       (else (list (car A) (cadr A) (pegar-subArbol  (caddr A) (cdr ruta))))
     )))
 
-; ==== GENERACION ALEATORIA DE ARBOLES === ;
-
-(define hoja-aleatoria
-  (lambda(p)
-    (cond
-        ((< p 0.33334) (realPositiveRand) ) ; Solo positivos para evitar las indefiniciones por completo.
-        ((< p 0.66667) 'x)
-        (else 'y)
-    )))
-
-(define arbol-altura-n 
-  (lambda(n)
-    (cond
-      ((zero? n) (hoja-aleatoria (random)))
-      (else (list (elementoEn opsPosibles (random (length opsPosibles))) (arbol-altura-n (- n 1)) (arbol-altura-n (- n 1))))
-    )))
-
-(define arbol-aleatorio
-  (lambda(n m) ; n es la cantidad de subarboles que quiero, m es la altura maxima de cada subarbol m<-N ^ m<-[1,+oo[. (m!=0).
-    (cond
-      ((= n 1) (arbol-altura-n (+ 1 (random m))))
-      (else (list (elementoEn opsPosibles (random (length opsPosibles))) (arbol-aleatorio (- n 1) m) (arbol-aleatorio (- n 1) m)))
-))) 
 
 
-
-;==== Mutaciones y cruces ====;
+;==== MUTACIONES Y CRUCES ====;
 
 ;--- Supermutar ---;
+; Dominio:
+; Codominio:
 (define supermutar
   (lambda (A p)
     (cond
@@ -328,10 +348,9 @@
       (else (pegar-subArbol A (pop (elegirHoja  A '())))) ; Añade un arbol aletorio al arbol, remplaza una hoja para hacerlo.
     )))
 
-
-
-
 ;--- Mutar ---;
+; Dominio:
+; Codominio:
 (define mutar
   (lambda (A p)
     (cond
@@ -341,9 +360,9 @@
       (else (cambiarOp (cambiarNum A (altura A) (realRand) (elegirNumRand A)) (random (altura A)) (elementoEn opsPosibles (random (length opsPosibles)))))
     )))
 
-
-
 ;--- Cruce ---;
+; Dominio:
+; Codominio:
 (define cruces
   (lambda (A B)
     (cond
@@ -352,7 +371,55 @@
       (else (list (car A) (cdr A) (cddr B))))))
 
 
-;==== Probar Funciones ====;
+
+;==== GENERACIÓN DE ÁRBOLES ==== ;
+;--- X ---;
+; Dominio:
+; Codominio:
+(define hoja-aleatoria
+  (lambda(p)
+    (cond
+        ((< p 0.33334) (realPositiveRand) ) ; Solo positivos para evitar las indefiniciones por completo.
+        ((< p 0.66667) 'x)
+        (else 'y)
+    )))
+
+;--- X ---;
+; Dominio:
+; Codominio:
+(define arbol-altura-n 
+  (lambda(n)
+    (cond
+      ((zero? n) (hoja-aleatoria (random)))
+      (else (list (elementoEn opsPosibles (random (length opsPosibles))) (arbol-altura-n (- n 1)) (arbol-altura-n (- n 1))))
+    )))
+
+;--- X ---;
+; Dominio:
+; Codominio:
+(define arbol-aleatorio
+  (lambda(n m) ; n es la cantidad de subarboles que quiero, m es la altura maxima de cada subarbol m<-N ^ m<-[1,+oo[. (m!=0).
+    (cond
+      ((= n 1) (arbol-altura-n (+ 1 (random m))))
+      (else (list (elementoEn opsPosibles (random (length opsPosibles))) (arbol-aleatorio (- n 1) m) (arbol-aleatorio (- n 1) m)))
+))) 
+
+
+
+;==== POBLACIÓN INICIAL ====;
+;--- X ---;
+; Dominio:
+; Codominio:
+(define generarPoblacion
+  (lambda (n)
+    (cond
+      ((zero? n) '())
+      (else (cons (arbol-aleatorio  (+ 1 (random  5)) (+ 1 (random  7))) (generarPoblacion  (- n 1))))
+    )))
+
+
+
+;==== PROBAR FUNCIONES ====;
 
 (define arbol-completo '(+ (* (/ 10 y) (loga_b 8 2)) (** x 2)))
 
@@ -364,26 +431,12 @@
 (define hojas (filter number? (nivel arbol-completo nivelHojas)))
 (define hojaRand (elementoEn hojas (random (length hojas))))
 
-        
+(define pts '((0 1 4) (1 3 5) (2 5 6)))
+
+
 ;--- Funciones ---;
 ;(cambiarNum arbol-completo nivelHojas 5 hojaRand)
 ;(cambiarOp arbol-completo 1 '+)
 
-
 ;(apply + (fitness '(error 11.34 21.38 12.123 56.93 12.21 11.56) 0.3755023920535431))
 ;(escogerElite indiv fits (apply max fits))
-
-
-
-
-
-
-;==== Población ====;
-
-(define  generarPoblacion
-  (lambda(n)
-    (cond
-      ((zero? n) '())
-      (else (cons (arbol-aleatorio  (+ 1 (random  5)) (+ 1 (random  7))) (generarPoblacion  (- n 1))))
-    )))
-
