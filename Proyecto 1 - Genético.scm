@@ -27,7 +27,7 @@
 ; Dominio:
 ; Codominio:
 (define recons-inv-Arb
-  (lambda(A)
+  (lambda (A)
     (cond
       ((or (null? A) (not (list? A))) A)
       (else (list (car A) (recons-inv-Arb (caddr A)) (recons-inv-Arb (cadr A)))))))
@@ -63,7 +63,7 @@
 ; Dominio:
 ; Codominio:
 (define primeros-n
-  (lambda(L n)
+  (lambda (L n)
     (cond
       ((or (null? L) (zero? n)) '())
       (else (cons (car L) (primeros-n (cdr L) (- n 1)))))))
@@ -72,14 +72,14 @@
 ; Dominio:
 ; Codominio:
 (define precisionK
-  (lambda(n k)
+  (lambda (n k)
    (/ (round (* n (expt 10 k))) (expt 10 k))))
 
 ;--- X ---;
 ; Dominio:
 ; Codominio:
 (define realRand
-  (lambda()
+  (lambda ()
     (cond
     ((< (random) 0.25) (precisionK (* -1 (* (random) (expt 10 (floor (* (random) 10))))) 6))
     (else (precisionK (* (random) (expt 10 (floor (* (random) 10)))) 6)))))
@@ -88,7 +88,7 @@
 ; Dominio:
 ; Codominio:
 (define realPositiveRand
-  (lambda()
+  (lambda ()
     (precisionK (* (random) (expt 10 (floor (* (random) 10)))) 6)))
 
 
@@ -237,7 +237,7 @@
 ; Dominio:
 ; Codominio:
 (define elegirNumRand
-  (lambda(A)
+  (lambda (A)
     (elementoEn (filter number? (nivel A (altura A))) 
           (random (length (filter number? (nivel A (altura A))))))))
 
@@ -245,7 +245,7 @@
 ; Dominio:
 ; Codominio:
 (define elegirHoja
-  (lambda(A ruta)
+  (lambda (A ruta)
     (cond
       ((or (null? A) (not (list? A))) (cons A ruta))
       ((< (random) 0.5 ) (cons 0 (elegirHoja (cadr A) ruta)))
@@ -255,7 +255,7 @@
 ; Dominio:
 ; Codominio:
 (define cambiarElemento
-  (lambda(A R e)
+  (lambda (A R e)
   (cond
     ((null? R) e)
     ((= 0 (car R)) (list (car A) (cambiarElemento (cadr A) (cdr R) e ) (caddr A)))
@@ -265,7 +265,7 @@
 ; Dominio:
 ; Codominio:
 (define swapHojas
-  (lambda(A R1 R2)
+  (lambda (A R1 R2)
     (cambiarElemento (cambiarElemento A (pop R2) (top R1)) (pop R1) (top R2))))
 
 ;--- Cambiar Operador ---;
@@ -299,7 +299,7 @@
 ; Dominio:
 ; Codominio:
 (define quitar-rama-aux
-  (lambda(A ruta)
+  (lambda (A ruta)
     (cond
       ((null? A) '()) 
       ((null? ruta) (cond ((< (random) 0.50) (realRand)) 
@@ -312,14 +312,14 @@
 ; Dominio:
 ; Codominio:
 (define quitar-rama
-  (lambda(A ruta)
+  (lambda (A ruta)
     (quitar-rama-aux A (primeros-n ruta (+ 1 (random (- (length ruta) 2)))))))
 
 ;--- X ---;
 ; Dominio:
 ; Codominio:
 (define pegar-subArbol
-  (lambda(A ruta)
+  (lambda (A ruta)
     (cond 
       ((null? ruta) (arbol-aleatorio (+ 1 (random 3)) (+ 1 (random 2))))
       ((zero? (car ruta)) (list (car A) (pegar-subArbol (cadr A) (cdr ruta)) (caddr A)))
@@ -337,7 +337,7 @@
     (cond
       ((< p 0.25) (quitar-rama A (elegirHoja A '()))) ; Agarra una rama y la remplaza por un valor 'x,'y o n / n <- R
       ((< p 0.5) (recons-inv-Arb A)) ; Cambia cada valor, y cada rama derecha por su izquierda, y viceveresa.
-      (else (pegar-subArbol A (pop (elegirHoja  A '()))))))) ; Añade un arbol aletorio al arbol, remplaza una hoja para hacerlo.
+      (else (pegar-subArbol A (pop (elegirHoja A '()))))))) ; Añade un arbol aletorio al arbol, remplaza una hoja para hacerlo.
 
 ;--- Mutar ---;
 ; Dominio:
@@ -369,7 +369,7 @@
 ; Dominio:
 ; Codominio:
 (define hoja-aleatoria
-  (lambda(p)
+  (lambda (p)
     (cond
         ((< p 0.33334) (realPositiveRand) ) ; Solo positivos para evitar las indefiniciones por completo.
         ((< p 0.66667) 'x)
@@ -379,7 +379,7 @@
 ; Dominio:
 ; Codominio:
 (define arbol-altura-n 
-  (lambda(n)
+  (lambda (n)
     (cond
       ((zero? n) (hoja-aleatoria (random)))
       (else (list (elementoEn opsPosibles (random (length opsPosibles))) (arbol-altura-n (- n 1)) (arbol-altura-n (- n 1)))))))
@@ -388,7 +388,7 @@
 ; Dominio:
 ; Codominio:
 (define arbol-aleatorio
-  (lambda(n m) ; n es la cantidad de subarboles que quiero, m es la altura maxima de cada subarbol m<-N ^ m<-[1,+oo[. (m!=0).
+  (lambda (n m) ; n es la cantidad de subarboles que quiero, m es la altura maxima de cada subarbol m<-N ^ m<-[1,+oo[. (m!=0).
     (cond
       ((= n 1) (arbol-altura-n (+ 1 (random m))))
       (else (list (elementoEn opsPosibles (random (length opsPosibles))) (arbol-aleatorio (- n 1) m) (arbol-aleatorio (- n 1) m)))))) 
@@ -396,6 +396,7 @@
 
 
 ;==== POBLACIÓN INICIAL ====;
+
 ;--- X ---;
 ; Dominio:
 ; Codominio:
