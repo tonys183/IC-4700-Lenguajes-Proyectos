@@ -208,6 +208,12 @@
 
 ;==== Auxiliares para Mutación ====;
 
+;--- Elegir un numero random de las hojas---;
+(define elegirNumRand
+  (lambda(A)
+    (elementoEn (filter number? (nivel A (altura A))) 
+          (random (length (filter number? (nivel A (altura A))))) )
+        ))
 
 ;---Elegir elemento de hoja random---;
 (define elegirHoja
@@ -277,7 +283,13 @@
 ))
 
 
-
+(define pegar-subArbol
+  (lambda(A ruta)
+    (cond 
+      ((null? ruta) (arbol-aleatorio  (+ 1 (random  3)) (+ 1 (random  2))))
+      ((zero? (car ruta )) (list (car A) (pegar-subArbol  (cadr A) (cdr ruta)) (caddr A)))
+      (else (list (car A) (cadr A) (pegar-subArbol  (caddr A) (cdr ruta))))
+    )))
 
 ; ==== GENERACION ALEATORIA DE ARBOLES === ;
 
@@ -313,8 +325,9 @@
     (cond
       ((< p 0.25) (quitar-rama A (elegirHoja A '()))) ; Agarra una rama y la remplaza por un valor 'x,'y o n / n <- R
       ((< p 0.5) (recons-inv-Arb A)) ; Cambia cada valor, y cada rama derecha por su izquierda, y viceveresa.
-      (else '()) ; Por implementar, añade un arbol aletorio al arbol.
+      (else (pegar-subArbol A (pop (elegirHoja  A '())))) ; Añade un arbol aletorio al arbol, remplaza una hoja para hacerlo.
     )))
+
 
 
 
@@ -351,11 +364,6 @@
 (define hojas (filter number? (nivel arbol-completo nivelHojas)))
 (define hojaRand (elementoEn hojas (random (length hojas))))
 
-(define elegirNumRand
-  (lambda(A)
-    (elementoEn (filter number? (nivel A (altura A))) 
-          (random (length (filter number? (nivel A (altura A))))) )
-        ))
         
 ;--- Funciones ---;
 ;(cambiarNum arbol-completo nivelHojas 5 hojaRand)
@@ -372,4 +380,10 @@
 
 ;==== Población ====;
 
-(arbol-aleatorio (+ 1 (random  5)) (+ 1 (random  3)))
+(define  generarPoblacion
+  (lambda(n)
+    (cond
+      ((zero? n) '())
+      (else (cons (arbol-aleatorio  (+ 1 (random  5)) (+ 1 (random  7))) (generarPoblacion  (- n 1))))
+    )))
+
