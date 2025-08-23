@@ -1,6 +1,6 @@
 #lang scheme
 
-;==== FUNCIONES AUXILIARES ====
+;==== FUNCIONES AUXILIARES ====;
 
 ;--- Altura ---;
 ; Dominio:
@@ -372,7 +372,7 @@
 
 
 
-;==== GENERACIÓN DE ÁRBOLES ==== ;
+;==== GENERACIÓN DE ÁRBOLES ====;
 ;--- X ---;
 ; Dominio:
 ; Codominio:
