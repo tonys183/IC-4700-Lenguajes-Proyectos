@@ -2,7 +2,7 @@
 
 ;==== Funciones auxiliares ====;
 
-;----- Manejo de arboles ----;
+;---- & Manejo de arboles & ----;
 ;--- Altura ---;
 ; Dominio:
 ; Codominio:
@@ -24,7 +24,18 @@
       ((list? A) (append (nivel (cadr A) (- n 1)) (nivel (caddr A) (- n 1))))
       (else (list)))))
 
-;--- Manejo de listas ---;
+;--- Reconstruir ---;
+
+(define recons-inv-Arb
+  (lambda(A)
+    (cond
+      ((or (null? A) (not (list? A))) A)
+      (else (list (car A) (recons-inv-Arb (caddr A)) (recons-inv-Arb (cadr A))))
+      )))
+
+
+
+;---- & Manejo de listas &- ---;
 ; Dominio:
 ; Codominio:
 (define elementoEn
@@ -45,6 +56,14 @@
       ((null? (cdr L)) (car L))
       (else (top (cdr L) )))))
 
+(define primeros-n
+  (lambda(L n)
+    (cond
+      ((or (null? L) (zero? n)) '())
+      (else (cons (car L) (primeros-n (cdr L) (- n 1))))
+    )))
+
+ 
 ;--- Auxiliares Números ---
 
 (define precisionK
@@ -236,7 +255,21 @@
       (else A))))
 
 
+;==== Auxiliares para Supermutación ====;
 
+(define quitar-rama-aux
+  (lambda(A ruta)
+    (cond
+      ((null? A) '()) 
+      ((null? ruta) (cond ((< (random) 0.50) (realRand)) ((< (random) 0.75) 'y)  (else 'x)))
+      ((= 0 (car ruta)) (list (car A)  (quitar-rama-aux (cadr A) (cdr ruta)) (caddr A)))
+      (else (list (car A) (cadr A) (quitar-rama-aux (caddr A) (cdr ruta))) )
+    )))
+
+(define quitar-rama
+  (lambda(A ruta)
+  (quitar-rama-aux A (primeros-n ruta (+ 1 (random (- (length ruta) 2))) ) )
+))
 
 ;==== Probar Funciones ====;
 
@@ -267,12 +300,18 @@
 
 
 
+
 ;==== Por Implementar ====;
 
 ;--- Supermutar ---;
 (define supermutar
   (lambda (A p)
-    (random)))
+    (cond
+      ((< p 0.25) (quitar-rama A (elegirHoja A '()))) ; Agarra una rama y la remplaza por un valor 'x,'y o n / n <- R
+      ((< p 0.5) (recons-inv-Arb A)) ; Cambia cada valor, y cada rama derecha por su izquierda, y viceveresa.
+      (else '()) ; Por implementar, añade un arbol aletorio al arbol.
+    )))
+
 
 
 ;--- Mutar ---;
@@ -286,8 +325,6 @@
     )))
 
 
-(mutar arbol-completo (random))
-
 
 ;--- Cruce ---;
 (define cruces
@@ -296,3 +333,6 @@
       ((< (random) 0.01) (supermutar (list (car A) (cdr A) (cddr B))))
       ((< (random) 0.05) (mutar (list (car A) (cdr A) (cddr B)) (random))) 
       (else (list (car A) (cdr A) (cddr B))))))
+
+
+
