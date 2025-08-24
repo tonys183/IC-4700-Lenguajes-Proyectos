@@ -2,6 +2,7 @@
 
 ;==== FUNCIONES AUXILIARES ====;
 
+
 ;--- Altura ---;
 ; Dominio:
 ; Codominio:
@@ -81,15 +82,15 @@
 (define realRand
   (lambda ()
     (cond
-    ((< (random) 0.25) (precisionK (* -1 (* (random) (expt 10 (floor (* (random) 10))))) 6))
-    (else (precisionK (* (random) (expt 10 (floor (* (random) 10)))) 6)))))
+    ((< (random) 0.25) (precisionK (* -1 (* (random) (expt 10 (random 6)))) 6))
+    (else (precisionK (* (random) (expt 10 (random 6))) 6)))))
 
 ;--- X ---;
 ; Dominio:
 ; Codominio:
 (define realPositiveRand
   (lambda ()
-    (precisionK (* (random) (expt 10 (floor (* (random) 10)))) 6)))
+    (precisionK (* (random) (expt 10 (random 6))) 6)))
 
 
 
@@ -123,8 +124,10 @@
 (define logValido
   (lambda (a b)
     (cond
-      ((or (< a 0) (<= b 1)) 'error)
-      (else (/ (log a) (log b))))))
+      ((or (<= a 0) (<= b 1)) 'error)
+      (else (divValida (log a) (log b))))))
+
+
 
 ;--- Definición de Operadores ---;
 (define opsValidas (list
@@ -135,9 +138,8 @@
                     (cons 'loga_b logValido)
                     (cons '** expValida)))
 
-;--- Operaciones Posibles ---;
-(define opsPosibles '('+ '- '* '/ 'loga_b '**))
-
+;--- Operaciones Posibles ---;}
+(define opsPosibles (map (lambda(i) (cdr i)) opsValidas)) ;Lista de funcionesx
 
 ;==== SET ====;
 
@@ -174,7 +176,6 @@
 ; Codominio:
 (define evalArbol
   (lambda (arbol x y)
-    (print arbol)
     (cond
       ((number? arbol) arbol)
       ((symbol? arbol)
@@ -182,7 +183,7 @@
          ((eq? arbol 'x) x)
          ((eq? arbol 'y) y)
          (else arbol)))
-      (else (evalOps (map (lambda (subArb) (evalArbol subArb x y)) (cdr arbol)) (cdr (assoc (car arbol) opsValidas)))))))
+      (else (evalOps (map (lambda (subArb) (evalArbol subArb x y)) (cdr arbol)) (car arbol))))))
 
 
 
@@ -202,6 +203,7 @@
                             (cond
                              ((eq? 'error (evalArbol A (car p) (cadr p))) 'error)
                              (else (expt (- (caddr p) (evalArbol A (car p) (cadr p))) 2)))) pts))))))
+
 
 ;--- X ---;
 ; Dominio:
@@ -457,9 +459,20 @@
 
 (define pts '((0 1 4) (1 3 5) (2 5 6)))
 
-;(define gen ((quote **) ('(quote *) 2 4) ('(quote **) 5 6)))
 
-(define funs (map (lambda(i) (cdr i)) opsValidas)) ;Lista de funciones
+(define gen (generarPoblacion 4))
+
+(define prueba
+  (lambda ()
+    (let* ((cercanias (map (lambda (ind) (cercaniaXYZ ind)) gen))
+           (fitnessVal (fitness cercanias (totalGen cercanias)))
+           (nuevaGen (generarNuevaGen gen))
+           ;; evaluar el nuevo gen (elite)
+           (cercaniaNuevaGen (map (lambda (ind) (cercaniaXYZ ind)) nuevaGen))
+           (fitnessNuevaGen (fitness cercaniaNuevaGen (totalGen cercanias))))
+      (list cercanias fitnessVal nuevaGen fitnessNuevaGen))))
+
+(prueba)
 
 
 ;--- Funciones ---;
