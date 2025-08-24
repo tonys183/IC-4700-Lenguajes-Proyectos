@@ -174,6 +174,7 @@
 ; Codominio:
 (define evalArbol
   (lambda (arbol x y)
+    (print arbol)
     (cond
       ((number? arbol) arbol)
       ((symbol? arbol)
@@ -362,9 +363,27 @@
       ((< (random) 0.05) (mutar (list (car A) (cdr A) (cddr B)) (random))) 
       (else (list (car A) (cdr A) (cddr B))))))
 
+;--- X ---;
+; Dominio:
+; Codominio:
+(define selectIntervalo
+  (lambda (listaFits rango)
+    (cond
+      ((null? listaFits) (list))
+      (else (cons (+ (car listaFits) rango) (selectIntervalo (cdr listaFits) (+ rango (car listaFits))))))))
 
+;--- X ---;
+; Dominio:
+; Codominio:
+(define selectIndiv
+  (lambda (genActual listaInterv rand)
+   (cond
+    ((< rand (car listaInterv)) (car genActual))
+    (else (selectIndiv (cdr genActual) (cdr listaInterv) rand))))
+  )
 
 ;==== GENERACIÓN DE ÁRBOLES ====;
+
 ;--- X ---;
 ; Dominio:
 ; Codominio:
@@ -395,7 +414,7 @@
 
 
 
-;==== POBLACIÓN INICIAL ====;
+;==== MANEJO DE POBLACIONES ====;
 
 ;--- X ---;
 ; Dominio:
@@ -403,9 +422,25 @@
 (define generarPoblacion
   (lambda (n)
     (cond
-      ((zero? n) '())
-      (else (cons (arbol-aleatorio (+ 1 (random 5)) (+ 1 (random 7))) (generarPoblacion (- n 1)))))))
+      ((zero? n) (crearSet))
+      (else (cons (arbol-aleatorio 2 2) (generarPoblacion (- n 1)))))))
 
+
+
+;--- X ---;
+; Dominio:
+; Codominio:
+(define generarNuevaGen
+  (lambda (genActual)
+    (list (escogerElite 
+            genActual 
+            (fitness (map (lambda (ind) (cercaniaXYZ ind)) genActual) (totalGen (map (lambda (ind) (cercaniaXYZ ind)) genActual)))
+            (apply max 
+              (fitness (map (lambda (ind) (cercaniaXYZ ind)) genActual) (totalGen (map (lambda (ind) (cercaniaXYZ ind)) genActual))))))))
+
+;--- X ---;
+; Dominio:
+; Codominio:
 
 
 ;==== PROBAR FUNCIONES ====;
@@ -422,10 +457,15 @@
 
 (define pts '((0 1 4) (1 3 5) (2 5 6)))
 
+;(define gen ((quote **) ('(quote *) 2 4) ('(quote **) 5 6)))
+
+(define funs (map (lambda(i) (cdr i)) opsValidas)) ;Lista de funciones
+
 
 ;--- Funciones ---;
 ;(cambiarNum arbol-completo nivelHojas 5 hojaRand)
 ;(cambiarOp arbol-completo 1 '+)
+;(selectIndiv indiv (selectIntervalo fits 0) (random))
 
 ;(apply + (fitness '(error 11.34 21.38 12.123 56.93 12.21 11.56) 0.3755023920535431))
 ;(escogerElite indiv fits (apply max fits))
