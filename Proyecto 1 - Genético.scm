@@ -19,8 +19,9 @@
 (define nivel
   (lambda (A n)
     (cond
-      ((null? A) (list))
+      ((null? A) A)
       ((zero? n) (list car A))
+      ((not (list? A)) (list))
       ((list? A) (append (nivel (cadr A) (- n 1)) (nivel (caddr A) (- n 1))))
       (else (list)))))
 
@@ -68,6 +69,18 @@
     (cond
       ((or (null? L) (zero? n)) '())
       (else (cons (car L) (primeros-n (cdr L) (- n 1)))))))
+
+;--- Elemento en Índice ---;
+; Dominio:
+; Codominio:
+(define quitarElemento
+  (lambda (L n)
+    (cond
+      ((null? L) L)
+      ((zero? n) (cdr L))
+      (else (cons (car L) (quitarElemento (cdr L) (- n 1))) )
+    )))
+
 
 ;--- X ---;
 ; Dominio:
@@ -229,6 +242,8 @@
 (define escogerElite
   (lambda (S F max)
     (cond
+      
+      ((null? S)  S)
       ((= (car F) max) (car S))
       (else (escogerElite (cdr S) (cdr F) max)))))
 
@@ -241,8 +256,12 @@
 ; Codominio:
 (define elegirNumRand
   (lambda (A)
-    (elementoEn (filter number? (nivel A (altura A))) 
-          (random (length (filter number? (nivel A (altura A))))))))
+    (cond
+      ((null? (filter number? (nivel A (altura A)))) 0)
+      (else  (elementoEn (filter number? (nivel A (altura A))) 
+          (random (length (filter number? (nivel A (altura A))) ) )))
+      )))
+   
 
 ;--- X ---;
 ; Dominio:
@@ -277,7 +296,7 @@
 (define cambiarOp
   (lambda (A nvl op)
     (cond
-      ((null? A) A)
+      ((or (not (list? A)) (null? A)) A)
       ((zero? nvl) (list op (cadr A) (caddr A)))
       ((and (not (list? (cadr A))) (not (list? (caddr A))) 
             (not (member (cadr A) opsPosibles equal?)) (not (member (caddr A) opsPosibles equal?)))
@@ -291,7 +310,7 @@
 (define cambiarNum
   (lambda (A nvl nuevoNum hoja)
     (cond 
-      ((null? A) A)
+      ((or (not (list? A)) (null? A)) A)
       ((zero? nvl) (cond ((equal? A hoja) nuevoNum) 
                           (else A)))
       ((list? A) (list (car A) (cambiarNum (cadr A) (- nvl 1) nuevoNum hoja) 
@@ -304,10 +323,8 @@
 (define quitar-rama-aux
   (lambda (A ruta)
     (cond
-      ((null? A) '()) 
-      ((null? ruta) (cond ((< (random) 0.50) (realRand)) 
-                          ((< (random) 0.75) 'y)
-                          (else 'x)))
+      ((or (not (list? A)) (null? A)) A)
+      ((null? ruta) (arbol-altura-n 1))
       ((= 0 (car ruta)) (list (car A) (quitar-rama-aux (cadr A) (cdr ruta)) (caddr A)))
       (else (list (car A) (cadr A) (quitar-rama-aux (caddr A) (cdr ruta)))))))
 
@@ -348,8 +365,9 @@
 (define mutar
   (lambda (A p)
     (cond
+      ((< (altura A) 1) A)
       ((< p 0.25) (cambiarOp A (random (altura A)) (elementoEn opsPosibles (random (length opsPosibles))) ))
-      ((< p 0.5) (cambiarNum A (altura A) (realRand) (elegirNumRand A)))
+      ((< p 0.50) (cambiarNum A (altura A) (realRand) (elegirNumRand A)))
       ((< p 0.75) (swapHojas A (elegirHoja A '()) (elegirHoja A '())))
       (else (cambiarOp (cambiarNum A (altura A) (realRand) (elegirNumRand A)) 
                        (random (altura A)) 
@@ -361,10 +379,13 @@
 (define cruces
   (lambda (A B)
     (cond
-      ((< (random) 0.01) (supermutar (list (car A) (cdr A) (cddr B))))
-      ((< (random) 0.05) (mutar (list (car A) (cdr A) (cddr B)) (random))) 
-      (else (list (car A) (cdr A) (cddr B))))))
+      ((null? B) A)
+      ((null? A) B)
+      ((< (random) 1.00) (supermutar (list (car A) (cadr A) (caddr B)) (random)))
+      ((< (random) 0.05) (mutar (list (car A) (cadr A) (caddr B)) (random))) 
+      (else (list (car A) (cadr A) (caddr B))))))
 
+    
 ;--- X ---;
 ; Dominio:
 ; Codominio:
@@ -380,6 +401,7 @@
 (define selectIndiv
   (lambda (genActual listaInterv rand)
    (cond
+    ((null? genActual) genActual)
     ((< rand (car listaInterv)) (car genActual))
     (else (selectIndiv (cdr genActual) (cdr listaInterv) rand))))
   )
@@ -416,33 +438,15 @@
 
 
 
-;==== MANEJO DE POBLACIONES ====;
-
-;--- X ---;
-; Dominio:
-; Codominio:
-(define generarPoblacion
-  (lambda (n)
-    (cond
-      ((zero? n) (crearSet))
-      (else (cons (arbol-aleatorio 2 2) (generarPoblacion (- n 1)))))))
 
 
+;--- Funciones ---;
+;(cambiarNum arbol-completo nivelHojas 5 hojaRand)
+;(cambiarOp arbol-completo 1 '+)
+;(selectIndiv indiv (selectIntervalo fits 0) (random))
 
-;--- X ---;
-; Dominio:
-; Codominio:
-(define generarNuevaGen
-  (lambda (genActual)
-    (list (escogerElite 
-            genActual 
-            (fitness (map (lambda (ind) (cercaniaXYZ ind)) genActual) (totalGen (map (lambda (ind) (cercaniaXYZ ind)) genActual)))
-            (apply max 
-              (fitness (map (lambda (ind) (cercaniaXYZ ind)) genActual) (totalGen (map (lambda (ind) (cercaniaXYZ ind)) genActual))))))))
-
-;--- X ---;
-; Dominio:
-; Codominio:
+;(apply + (fitness '(error 11.34 21.38 12.123 56.93 12.21 11.56) 0.3755023920535431))
+;(escogerElite indiv fits (apply max fits))
 
 
 ;==== PROBAR FUNCIONES ====;
@@ -460,25 +464,86 @@
 (define pts '((0 1 4) (1 3 5) (2 5 6)))
 
 
-(define gen (generarPoblacion 4))
+
+
+(define printL
+  (lambda (L)
+    (for-each (lambda (x)
+                (display x)
+                (newline)
+              (newline))
+              L)))
+
+    
+
+
+
+
+;==== MANEJO DE POBLACIONES ====;
+
+;--- X ---;
+; Dominio:
+; Codominio:
+(define generarPoblacion
+  (lambda (n)
+    (cond
+      ((zero? n) (crearSet))
+      (else (cons (arbol-aleatorio 2 2) (generarPoblacion (- n 1)))))))
+
+
+
+;--- X ---;
+; Dominio:
+; Codominio:
+(define mejorGen
+  (lambda (genActual)
+    (print "Cerc") (print (map (lambda (ind) (cercaniaXYZ ind)) genActual)) (newline) (newline)
+    (print (fitness (map (lambda (ind) (cercaniaXYZ ind)) genActual) (totalGen (map (lambda (ind) (cercaniaXYZ ind)) genActual)))) (newline) (newline)
+    (list (escogerElite 
+            genActual 
+            (fitness (map (lambda (ind) (cercaniaXYZ ind)) genActual) (totalGen (map (lambda (ind) (cercaniaXYZ ind)) genActual)))
+            (apply max
+              (fitness (map (lambda (ind) (cercaniaXYZ ind)) genActual) (totalGen (map (lambda (ind) (cercaniaXYZ ind)) genActual)))))
+            )))
+
+
+
+;--- X ---;
+; Dominio:
+; Codominio:
+(define generar-descendencia
+  (lambda (DES P n fits)  ; Descendencia, padres, numero de hijos.
+  (cond
+    ((zero? n) DES)
+    (else (cons 
+      (cruces (selectIndiv P (selectIntervalo fits 0) (random)) (selectIndiv P (selectIntervalo fits 0) (random))) 
+      (generar-descendencia DES P (- n 1) fits)) )
+  )))
+
+
+
+(define algoritmo-genetico
+  (lambda(PG n)
+  (cond
+  ((zero? n) (car (mejorGen PG)))
+  (else (algoritmo-genetico (generar-descendencia (mejorGen PG) PG (length PG)
+  (fitness (map (lambda (ind) (cercaniaXYZ ind)) PG) (totalGen (map (lambda (ind) (cercaniaXYZ ind)) PG)))) 
+  (- n 1)))
+  )))
+
+(define gen (generarPoblacion 50))
+
+;(algoritmo-genetico gen 30)
+
 
 (define prueba
   (lambda ()
     (let* ((cercanias (map (lambda (ind) (cercaniaXYZ ind)) gen))
            (fitnessVal (fitness cercanias (totalGen cercanias)))
-           (nuevaGen (generarNuevaGen gen))
+           (nuevaGen (mejorGen gen))
            ;; evaluar el nuevo gen (elite)
            (cercaniaNuevaGen (map (lambda (ind) (cercaniaXYZ ind)) nuevaGen))
            (fitnessNuevaGen (fitness cercaniaNuevaGen (totalGen cercanias))))
       (list cercanias fitnessVal nuevaGen fitnessNuevaGen))))
 
 (prueba)
-
-
-;--- Funciones ---;
-;(cambiarNum arbol-completo nivelHojas 5 hojaRand)
-;(cambiarOp arbol-completo 1 '+)
-;(selectIndiv indiv (selectIntervalo fits 0) (random))
-
-;(apply + (fitness '(error 11.34 21.38 12.123 56.93 12.21 11.56) 0.3755023920535431))
-;(escogerElite indiv fits (apply max fits))
