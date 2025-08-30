@@ -95,15 +95,15 @@
 (define realRand
   (lambda ()
     (cond
-    ((< (random) 0.25) (precisionK (* -1 (* (random) (expt 10 (random 6)))) 6))
-    (else (precisionK (* (random) (expt 10 (random 6))) 6)))))
+    ((< (random) 0.25) (precisionK (* -1 (* (random) (expt 10 (random 4)))) 6))
+    (else (precisionK (* (random) (expt 10 (random 4))) 6)))))
 
 ;--- X ---;
 ; Dominio:
 ; Codominio:
 (define realPositiveRand
   (lambda ()
-    (precisionK (* (random) (expt 10 (random 6))) 6)))
+    (precisionK (* (random) (expt 10 (random 4))) 6)))
 
 
 
@@ -182,6 +182,8 @@
   (lambda (paramOp op)
     (cond
       ((member 'error paramOp equal?) 'error)
+      ((member '+inf.0 paramOp equal?) 'error)
+      ((member '-inf.0 paramOp equal?) 'error)
       (else (apply op paramOp)))))
 
 ;--- X ---;
@@ -211,10 +213,12 @@
       ((member 'error (map (lambda (p)
                             (cond
                              ((eq? 'error (evalArbol A (car p) (cadr p))) 'error)
+                             ((or (eq? '+inf.0 (evalArbol A (car p) (cadr p))) (eq? '-inf.0 (evalArbol A (car p) (cadr p)))) 'error )
                              (else (expt (- (caddr p) (evalArbol A (car p) (cadr p))) 2)))) pts)) 'error)
       (else (apply + (map (lambda (p)
                             (cond
                              ((eq? 'error (evalArbol A (car p) (cadr p))) 'error)
+                             ((or (eq? '+inf.0 (evalArbol A (car p) (cadr p))) (eq? '-inf.0 (evalArbol A (car p) (cadr p)))) 'error )
                              (else (expt (- (caddr p) (evalArbol A (car p) (cadr p))) 2)))) pts))))))
 
 
@@ -533,7 +537,7 @@
 
 (define gen (generarPoblacion 50))
 
-;(algoritmo-genetico gen 30)
+(algoritmo-genetico gen 30)
 
 
 (define prueba
@@ -546,4 +550,5 @@
            (fitnessNuevaGen (fitness cercaniaNuevaGen (totalGen cercanias))))
       (list cercanias fitnessVal nuevaGen fitnessNuevaGen))))
 
-(prueba)
+
+
