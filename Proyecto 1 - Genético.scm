@@ -2,7 +2,6 @@
 
 ;==== FUNCIONES AUXILIARES ====;
 
-
 ;--- Altura ---;
 ; Dominio:
 ; Codominio:
@@ -20,7 +19,7 @@
   (lambda (A n)
     (cond
       ((null? A) A)
-      ((zero? n) (list car A))
+      ((zero? n) (list A))
       ((not (list? A)) (list))
       ((list? A) (append (nivel (cadr A) (- n 1)) (nivel (caddr A) (- n 1))))
       (else (list)))))
@@ -81,7 +80,6 @@
       (else (cons (car L) (quitarElemento (cdr L) (- n 1))) )
     )))
 
-
 ;--- X ---;
 ; Dominio:
 ; Codominio:
@@ -115,6 +113,7 @@
 (define divValida
   (lambda (a b)
     (cond
+      ((or (eq? 'error a) (eq? 'error b)) 'error)
       ((= b 0) 'error)
       (else (/ a b)))))
 
@@ -124,11 +123,14 @@
 (define expValida
   (lambda (b e)
     (cond
+      ((or (eq? 'error e) (eq? 'error b)) 'error)
       ((and (zero? b) (< e 0)) 'error)
       ((and (< b 0) (not (integer? e)))
-       (cond
-         ((complex? (- (expt (- b) e))) 'error) ;Complex? no sirve del todo
+       (cond 
+            ((complex? (- (expt (- b) e))) 'error)
             (else (- (expt (- b) e)))))
+      ((> (abs e) 20) (expt b (random 10)))
+      ((> (abs b) 1000) (expt (+ 1 (random 100)) e))
       (else (expt b e)))))
 
 ;--- X ---;
@@ -137,22 +139,56 @@
 (define logValido
   (lambda (a b)
     (cond
+      ((or (eq? 'error a) (eq? 'error b)) 'error)
       ((or (<= a 0) (<= b 1)) 'error)
       (else (divValida (log a) (log b))))))
 
+;--- X ---;
+; Dominio:
+; Codominio:
+(define sumaValida
+  (lambda (a b)
+      (cond
+        ((or (eq? 'error a) (eq? 'error b)) 'error)
+        ((or (eq? a -inf.0) (eq? b -inf.0) (eq? a +inf.0) (eq? b +inf.0) ) 'error)
+        (else (+ a b) 
+    ))))
 
+;--- X ---;
+; Dominio:
+; Codominio:
+(define restaValida
+  (lambda (a b)
+      (cond
+        ((or (eq? 'error a) (eq? 'error b)) 'error)
+        ((or (eq? a -inf.0) (eq? b -inf.0) (eq? a +inf.0) (eq? b +inf.0) ) 'error)
+        (else (- a b) 
+    ))))
 
+;--- X ---;
+; Dominio:
+; Codominio:
+(define mulValida
+  (lambda (a b)
+      (cond
+        ((or (eq? 'error a) (eq? 'error b)) 'error)
+        ((or (eq? a -inf.0) (eq? b -inf.0) (eq? a +inf.0) (eq? b +inf.0) ) 'error)
+        (else (* a b) 
+    ))))
+  
 ;--- Definición de Operadores ---;
 (define opsValidas (list
-                    (cons '+ +)
-                    (cons '- -)
-                    (cons '* *)
+                    (cons '+ sumaValida)
+                    (cons '- restaValida)
+                    (cons '* mulValida)
                     (cons '/ divValida)
                     (cons 'loga_b logValido)
                     (cons '** expValida)))
 
 ;--- Operaciones Posibles ---;}
-(define opsPosibles (map (lambda(i) (cdr i)) opsValidas)) ;Lista de funcionesx
+(define opsPosibles (map (lambda(i) (cdr i)) opsValidas)) ;Lista de funciones
+
+
 
 ;==== SET ====;
 
@@ -182,8 +218,8 @@
   (lambda (paramOp op)
     (cond
       ((member 'error paramOp equal?) 'error)
-      ((member '+inf.0 paramOp equal?) 'error)
-      ((member '-inf.0 paramOp equal?) 'error)
+      ((member +inf.0 paramOp equal?) 'error)
+      ((member -inf.0 paramOp equal?) 'error)
       (else (apply op paramOp)))))
 
 ;--- X ---;
@@ -196,8 +232,7 @@
       ((symbol? arbol)
        (cond
          ((eq? arbol 'x) x)
-         ((eq? arbol 'y) y)
-         (else arbol)))
+         (else y)))
       (else (evalOps (map (lambda (subArb) (evalArbol subArb x y)) (cdr arbol)) (car arbol))))))
 
 
@@ -210,17 +245,11 @@
 (define cercaniaXYZ
   (lambda (A)
     (cond
-      ((member 'error (map (lambda (p)
-                            (cond
-                             ((eq? 'error (evalArbol A (car p) (cadr p))) 'error)
-                             ((or (eq? '+inf.0 (evalArbol A (car p) (cadr p))) (eq? '-inf.0 (evalArbol A (car p) (cadr p)))) 'error )
-                             (else (expt (- (caddr p) (evalArbol A (car p) (cadr p))) 2)))) pts)) 'error)
-      (else (apply + (map (lambda (p)
-                            (cond
-                             ((eq? 'error (evalArbol A (car p) (cadr p))) 'error)
-                             ((or (eq? '+inf.0 (evalArbol A (car p) (cadr p))) (eq? '-inf.0 (evalArbol A (car p) (cadr p)))) 'error )
-                             (else (expt (- (caddr p) (evalArbol A (car p) (cadr p))) 2)))) pts))))))
-
+      ((null? A) 'error)
+      (else
+      (foldl sumaValida
+            0
+            (map (lambda (p) (expValida (restaValida (caddr p) (evalArbol A (car p) (cadr p))) 2)) pts))))))
 
 ;--- X ---;
 ; Dominio:
@@ -246,9 +275,8 @@
 (define escogerElite
   (lambda (S F max)
     (cond
-      
-      ((null? S)  S)
-      ((= (car F) max) (car S))
+      ((or (null? S) (null? F)) S)
+      ((equal? (car F) max) (car S))
       (else (escogerElite (cdr S) (cdr F) max)))))
 
 
@@ -385,7 +413,7 @@
     (cond
       ((null? B) A)
       ((null? A) B)
-      ((< (random) 1.00) (supermutar (list (car A) (cadr A) (caddr B)) (random)))
+      ((< (random) 0.01) (supermutar (list (car A) (cadr A) (caddr B)) (random)))
       ((< (random) 0.05) (mutar (list (car A) (cadr A) (caddr B)) (random))) 
       (else (list (car A) (cadr A) (caddr B))))))
 
@@ -409,6 +437,8 @@
     ((< rand (car listaInterv)) (car genActual))
     (else (selectIndiv (cdr genActual) (cdr listaInterv) rand))))
   )
+
+
 
 ;==== GENERACIÓN DE ÁRBOLES ====;
 
@@ -442,47 +472,6 @@
 
 
 
-
-
-;--- Funciones ---;
-;(cambiarNum arbol-completo nivelHojas 5 hojaRand)
-;(cambiarOp arbol-completo 1 '+)
-;(selectIndiv indiv (selectIntervalo fits 0) (random))
-
-;(apply + (fitness '(error 11.34 21.38 12.123 56.93 12.21 11.56) 0.3755023920535431))
-;(escogerElite indiv fits (apply max fits))
-
-
-;==== PROBAR FUNCIONES ====;
-
-(define arbol-completo '(+ (* (/ 10 y) (loga_b 8 2)) (** x 2)))
-
-;--- Datos ---;
-(define indiv '(A B C D E F G))
-(define fits (fitness '(error 11.34 21.38 12.123 56.93 12.21 11.56) 0.3755023920535431))
-
-(define nivelHojas (altura arbol-completo))
-(define hojas (filter number? (nivel arbol-completo nivelHojas)))
-(define hojaRand (elementoEn hojas (random (length hojas))))
-
-(define pts '((0 1 4) (1 3 5) (2 5 6)))
-
-
-
-
-(define printL
-  (lambda (L)
-    (for-each (lambda (x)
-                (display x)
-                (newline)
-              (newline))
-              L)))
-
-    
-
-
-
-
 ;==== MANEJO DE POBLACIONES ====;
 
 ;--- X ---;
@@ -494,23 +483,14 @@
       ((zero? n) (crearSet))
       (else (cons (arbol-aleatorio 2 2) (generarPoblacion (- n 1)))))))
 
-
-
 ;--- X ---;
 ; Dominio:
 ; Codominio:
 (define mejorGen
-  (lambda (genActual)
-    (print "Cerc") (print (map (lambda (ind) (cercaniaXYZ ind)) genActual)) (newline) (newline)
-    (print (fitness (map (lambda (ind) (cercaniaXYZ ind)) genActual) (totalGen (map (lambda (ind) (cercaniaXYZ ind)) genActual)))) (newline) (newline)
-    (list (escogerElite 
-            genActual 
-            (fitness (map (lambda (ind) (cercaniaXYZ ind)) genActual) (totalGen (map (lambda (ind) (cercaniaXYZ ind)) genActual)))
-            (apply max
-              (fitness (map (lambda (ind) (cercaniaXYZ ind)) genActual) (totalGen (map (lambda (ind) (cercaniaXYZ ind)) genActual)))))
-            )))
-
-
+  (lambda (genActual fits)
+  ;(print "Cerc") (print (map (lambda (ind) (cercaniaXYZ ind)) genActual)) (newline) (newline)
+    ;(print (fitness (map (lambda (ind) (cercaniaXYZ ind)) genActual) (totalGen (map (lambda (ind) (cercaniaXYZ ind)) genActual)))) (newline) (newline)
+    (list (escogerElite genActual fits (apply max fits)) )))
 
 ;--- X ---;
 ; Dominio:
@@ -524,31 +504,59 @@
       (generar-descendencia DES P (- n 1) fits)) )
   )))
 
-
-
+;--- X ---;
+; Dominio:
+; Codominio:
 (define algoritmo-genetico
   (lambda(PG n)
   (cond
-  ((zero? n) (car (mejorGen PG)))
-  (else (algoritmo-genetico (generar-descendencia (mejorGen PG) PG (length PG)
+  ((zero? n) (car (mejorGen PG (fitness (map (lambda (ind) (cercaniaXYZ ind)) PG) (totalGen (map (lambda (ind) (cercaniaXYZ ind)) PG))))))
+  (else (algoritmo-genetico (generar-descendencia (mejorGen PG (fitness (map (lambda (ind) (cercaniaXYZ ind)) PG) (totalGen (map (lambda (ind) (cercaniaXYZ ind)) PG)))) PG (length PG)
   (fitness (map (lambda (ind) (cercaniaXYZ ind)) PG) (totalGen (map (lambda (ind) (cercaniaXYZ ind)) PG)))) 
   (- n 1)))
   )))
 
-(define gen (generarPoblacion 50))
+(define pts
+  '((7 1 8)
+    (18 13 31)
+    (9 9 18)
+    (14 4 18)
+    (10 9 19)
+    (18 1 19)
+    (16 5 21)
+    (0 16 16)
+    (19 11 30)
+    (10 9 19)
+    (14 4 18)
+    (12 18 30)
+    (3 11 14)
+    (10 0 10)
+    (17 17 34)
+    (2 0 2)
+    (17 15 32)
+    (15 1 16)
+    (2 18 20)
+    (4 1 5)
+    (13 19 32)
+    (5 19 24)
+    (14 8 22)
+    (9 18 27)
+    (16 12 28)
+    (3 12 15)
+    (15 12 27)
+    (0 15 15)
+    (13 18 31)
+    (9 19 28)
+    (7 4 11)
+    (19 19 38)
+    (14 19 33)
+    (6 6 12)
+    (8 17 25)
+    (9 3 12)
+    (14 2 16)
+    (3 1 4)
+    (13 5 18)
+    (12 6 18)))
 
-(algoritmo-genetico gen 30)
-
-
-(define prueba
-  (lambda ()
-    (let* ((cercanias (map (lambda (ind) (cercaniaXYZ ind)) gen))
-           (fitnessVal (fitness cercanias (totalGen cercanias)))
-           (nuevaGen (mejorGen gen))
-           ;; evaluar el nuevo gen (elite)
-           (cercaniaNuevaGen (map (lambda (ind) (cercaniaXYZ ind)) nuevaGen))
-           (fitnessNuevaGen (fitness cercaniaNuevaGen (totalGen cercanias))))
-      (list cercanias fitnessVal nuevaGen fitnessNuevaGen))))
-
-
-
+(define gen (generarPoblacion 100))
+(algoritmo-genetico gen 100)
