@@ -1,4 +1,6 @@
-#lang scheme
+#lang racket
+(require plot)
+(plot-new-window? #t)
 
 ;==== FUNCIONES AUXILIARES ====;
 
@@ -93,15 +95,15 @@
 (define realRand
   (lambda ()
     (cond
-    ((< (random) 0.25) (precisionK (* -1 (* (random) (expt 10 (random 4)))) 6))
-    (else (precisionK (* (random) (expt 10 (random 4))) 6)))))
+    ((< (random) 0.25) (precisionK (* -1 (* (random) (expt 10 (random 2)))) 6))
+    (else (precisionK (* (random) (expt 10 (random 2))) 6)))))
 
 ;--- X ---;
 ; Dominio:
 ; Codominio:
 (define realPositiveRand
   (lambda ()
-    (precisionK (* (random) (expt 10 (random 4))) 6)))
+    (precisionK (* (random) (expt 10 (random 2))) 6)))
 
 
 
@@ -125,10 +127,7 @@
     (cond
       ((or (eq? 'error e) (eq? 'error b)) 'error)
       ((and (zero? b) (< e 0)) 'error)
-      ((and (< b 0) (not (integer? e)))
-       (cond 
-            ((complex? (- (expt (- b) e))) 'error)
-            (else (- (expt (- b) e)))))
+      ((and (< b 0) (not (integer? e))) (expt (abs b) e))
       ((> (abs e) 20) (expt b (random 10)))
       ((> (abs b) 1000) (expt (+ 1 (random 100)) e))
       (else (expt b e)))))
@@ -140,7 +139,7 @@
   (lambda (a b)
     (cond
       ((or (eq? 'error a) (eq? 'error b)) 'error)
-      ((or (<= a 0) (<= b 1)) 'error)
+      ((or (<= a 0) (<= b 0) (= b 1)) 'error)
       (else (divValida (log a) (log b))))))
 
 ;--- X ---;
@@ -214,13 +213,21 @@
 ;--- X ---;
 ; Dominio:
 ; Codominio:
+(define evalOps-helper
+  (lambda (result)
+    (cond
+      ((eq? result 'error) COTA_ERROR)
+      ((equal? result +inf.0) COTA_ERROR)
+      ((equal? result -inf.0) COTA_ERROR)
+      (else result))))
+
 (define evalOps
   (lambda (paramOp op)
     (cond
-      ((member 'error paramOp equal?) 'error)
-      ((member +inf.0 paramOp equal?) 'error)
-      ((member -inf.0 paramOp equal?) 'error)
-      (else (apply op paramOp)))))
+      ((member 'error paramOp equal?) COTA_ERROR)
+      ((member +inf.0 paramOp equal?) COTA_ERROR)
+      ((member -inf.0 paramOp equal?) COTA_ERROR)
+      (else (evalOps-helper (apply op paramOp))))))
 
 ;--- X ---;
 ; Dominio:
@@ -245,11 +252,14 @@
 (define cercaniaXYZ
   (lambda (A)
     (cond
-      ((null? A) 'error)
+      ((null? A) COTA_ERROR)
       (else
-      (foldl sumaValida
-            0
-            (map (lambda (p) (expValida (restaValida (caddr p) (evalArbol A (car p) (cadr p))) 2)) pts))))))
+       (foldl
+        sumaValida
+        0
+        (map (lambda (p) (cond ((eq? (evalArbol A (car p) (cadr p)) 'error) COTA_ERROR)
+                 (else (expValida (restaValida (caddr p) (evalArbol A (car p) (cadr p))) 2))))
+             pts))))))
 
 ;--- X ---;
 ; Dominio:
@@ -373,7 +383,7 @@
 (define pegar-subArbol
   (lambda (A ruta)
     (cond 
-      ((null? ruta) (arbol-aleatorio (+ 1 (random 3)) (+ 1 (random 2))))
+      ((null? ruta) (arbol-aleatorio (+ 1 (random 1)) (+ 1 (random 1))))
       ((zero? (car ruta)) (list (car A) (pegar-subArbol (cadr A) (cdr ruta)) (caddr A)))
       (else (list (car A) (cadr A) (pegar-subArbol (caddr A) (cdr ruta)))))))
 
@@ -387,8 +397,8 @@
 (define supermutar
   (lambda (A p)
     (cond
-      ((< p 0.25) (quitar-rama A (elegirHoja A '()))) ; Agarra una rama y la remplaza por un valor 'x,'y o n / n <- R
-      ((< p 0.5) (recons-inv-Arb A)) ; Cambia cada valor, y cada rama derecha por su izquierda, y viceveresa.
+      ((< p 0.5) (quitar-rama A (elegirHoja A '()))) ; Agarra una rama y la remplaza por un valor 'x,'y o n / n <- R
+      ((< p 0.75) (recons-inv-Arb A)) ; Cambia cada valor, y cada rama derecha por su izquierda, y viceveresa.
       (else (pegar-subArbol A (pop (elegirHoja A '()))))))) ; Añade un arbol aletorio al arbol, remplaza una hoja para hacerlo.
 
 ;--- Mutar ---;
@@ -413,8 +423,8 @@
     (cond
       ((null? B) A)
       ((null? A) B)
-      ((< (random) 0.01) (supermutar (list (car A) (cadr A) (caddr B)) (random)))
-      ((< (random) 0.05) (mutar (list (car A) (cadr A) (caddr B)) (random))) 
+      ((< (random) 0.1) (supermutar (list (car A) (cadr A) (caddr B)) (random)))
+      ((< (random) 0.15) (mutar (list (car A) (cadr A) (caddr B)) (random))) 
       (else (list (car A) (cadr A) (caddr B))))))
 
     
@@ -467,7 +477,7 @@
 (define arbol-aleatorio
   (lambda (n m) ; n es la cantidad de subarboles que quiero, m es la altura maxima de cada subarbol m<-N ^ m<-[1,+oo[. (m!=0).
     (cond
-      ((= n 1) (arbol-altura-n (+ 1 (random m))))
+      ((= n 1) (arbol-altura-n (+ m 1)))
       (else (list (elementoEn opsPosibles (random (length opsPosibles))) (arbol-aleatorio (- n 1) m) (arbol-aleatorio (- n 1) m)))))) 
 
 
@@ -481,14 +491,14 @@
   (lambda (n)
     (cond
       ((zero? n) (crearSet))
-      (else (cons (arbol-aleatorio 2 2) (generarPoblacion (- n 1)))))))
+      (else (cons (arbol-aleatorio (+ 1 (random 1)) (+ 1 (random 1))) (generarPoblacion (- n 1)))))))
 
 ;--- X ---;
 ; Dominio:
 ; Codominio:
 (define mejorGen
   (lambda (genActual fits)
-  ;(print "Cerc") (print (map (lambda (ind) (cercaniaXYZ ind)) genActual)) (newline) (newline)
+    (print "Cerc") (print (map (lambda (ind) (cercaniaXYZ ind)) genActual)) (newline) (newline)
     ;(print (fitness (map (lambda (ind) (cercaniaXYZ ind)) genActual) (totalGen (map (lambda (ind) (cercaniaXYZ ind)) genActual)))) (newline) (newline)
     (list (escogerElite genActual fits (apply max fits)) )))
 
@@ -510,13 +520,75 @@
 (define algoritmo-genetico
   (lambda(PG n)
   (cond
-  ((zero? n) (car (mejorGen PG (fitness (map (lambda (ind) (cercaniaXYZ ind)) PG) (totalGen (map (lambda (ind) (cercaniaXYZ ind)) PG))))))
-  (else (algoritmo-genetico (generar-descendencia (mejorGen PG (fitness (map (lambda (ind) (cercaniaXYZ ind)) PG) (totalGen (map (lambda (ind) (cercaniaXYZ ind)) PG)))) PG (length PG)
+  ((zero? n) (print "fin") (car (mejorGen PG (fitness (map (lambda (ind) (cercaniaXYZ ind)) PG) (totalGen (map (lambda (ind) (cercaniaXYZ ind)) PG))))))
+  ((>= 0.25 (cercaniaXYZ (car (mejorGen PG
+          (fitness (map (lambda (ind) (cercaniaXYZ ind)) PG)
+                    (totalGen (map (lambda (ind) (cercaniaXYZ ind)) PG))))))) (car (mejorGen PG (fitness (map (lambda (ind) (cercaniaXYZ ind)) PG) (totalGen (map (lambda (ind) (cercaniaXYZ ind)) PG))))))
+  (else (algoritmo-genetico (generar-descendencia (mejorGen PG (fitness (map (lambda (ind) (cercaniaXYZ ind)) PG) (totalGen (map (lambda (ind) (cercaniaXYZ ind)) PG)))) PG (- (length PG) 1)
   (fitness (map (lambda (ind) (cercaniaXYZ ind)) PG) (totalGen (map (lambda (ind) (cercaniaXYZ ind)) PG)))) 
   (- n 1)))
   )))
 
+
+(define COTA_ERROR 1.0e7)
+
+(define pts1
+  '((19 15 29346.35851851852)
+    (2 9 1.0534979423868314)
+    (2 2 21.333333333333332)
+    (6 14 105.79591836734694)
+    (7 10 448.18666666666667)
+    (7 18 138.32921810699588)
+    (6 5 829.44)
+    (2 13 0.504930966469428)
+    (2 4 5.333333333333333)
+    (6 14 105.79591836734694)))
+
+
 (define pts
+  '((4 17 -2.4497720911755554)
+    (18 18 89295665425899.97)
+    (14 15 -5886448.888255767)
+    (5 1 0.15592448293623584)
+    (6 0 0.09047539154589039)
+    (2 11 -0.011618783380305042)
+    (3 12 -0.12606209562358486)
+    (15 16 -38931442.58443023)
+    (9 12 -1318.6359677907499)
+    (12 14 -181011.55860384842)
+    (4 15 -1.5999968706280614)
+    (7 3 0.7676317512752314)
+    (13 4 14.10577688348565)
+    (7 4 1.7429185241417005)
+    (9 10 -972.9858294278807)
+    (17 3 25.555036074522636)
+    (2 8 -0.022675969371921127)
+    (7 18 -1355.8618354315115)
+    (6 17 -150.36511151795014)
+    (2 3 -0.29251189747407047)
+    (17 19 -2711501213.613263)
+    (19 12 2381741.3955791583)
+    (9 0 0.1219744326565336)
+    (7 0 0.09461557702483518)
+    (2 2 2.718281828459045)
+    (8 14 -847.1487092209862)
+    (5 14 -8.697010469045177)
+    (9 2 0.5807556858098182)
+    (2 13 -0.008237769270189607)
+    (11 2 1.0412422649541293)
+    (6 10 -12.716588105740703)
+    (17 12 751887.6135417097)
+    (8 0 0.10499644237143123)
+    (12 18 -1882257.8027239882)
+    (2 2 2.718281828459045)
+    (17 6 701.4163925167654)
+    (3 14 -0.1365009957082285)
+    (12 5 24.875518175753292)
+    (2 11 -0.011618783380305042)
+    (19 5 581.8154927034864)))
+
+
+(define pts4
   '((7 1 8)
     (18 13 31)
     (9 9 18)
@@ -558,5 +630,100 @@
     (13 5 18)
     (12 6 18)))
 
+
+(define pts5
+  '((6 10 -64)
+    (6 9 -45)
+    (19 9 280)
+    (18 19 -37)
+    (6 5 11)
+    (7 18 -275)
+    (2 4 -12)
+    (7 16 -207)
+    (1 5 -24)
+    (4 18 -308)
+    (0 13 -169)
+    (1 8 -63)
+    (11 14 -75)
+    (7 17 -240)
+    (0 19 -361)
+    (2 0 4)
+    (15 9 144)
+    (13 0 169)
+    (12 14 -52)
+    (10 11 -21)
+    (3 6 -27)
+    (1 11 -120)
+    (10 7 51)
+    (0 9 -81)
+    (14 19 -165)
+    (9 15 -144)
+    (4 10 -84)
+    (3 8 -55)
+    (9 1 80)
+    (16 19 -105)
+    (2 4 -12)
+    (17 11 168)
+    (14 19 -165)
+    (19 11 240)
+    (7 2 45)
+    (5 14 -171)
+    (6 14 -160)
+    (4 2 12)
+    (1 7 -48)
+    (2 3 -5)))
+
+
+(define pts6
+  '((11 3 0.6274735630753033)
+    (11 2 0.5404763088546395)
+    (17 11 0.8711164930263436)
+    (19 18 0.983974444213354)
+    (10 17 1.184929413512433)
+    (3 6 1.2920296742201791)
+    (8 13 1.1760912590556811)
+    (7 13 1.2324867603589635)
+    (13 15 1.0462189153299533)
+    (3 11 1.5936926411670824)
+    (6 7 1.0566416671474377)
+    (4 5 1.0860331325016919)
+    (1 2 1.2618595071429148)
+    (11 19 1.1869717539906937)
+    (16 19 1.0533324751067528)
+    (18 16 0.9648297958439285)
+    (4 9 1.3382908331057726)
+    (19 12 0.8668214419824227)
+    (4 18 1.6719500161730103)
+    (14 5 0.701838730514401)
+    (3 12 1.6397385131955606)
+    (4 5 1.0860331325016919)
+    (5 10 1.276989408269624)
+    (0 17 4.247927513443585)
+    (7 13 1.2324867603589635)
+    (12 9 0.9086181061280522)
+    (13 5 0.7185650207899779)
+    (19 12 0.8668214419824227)
+    (10 5 0.783091851446946)
+    (4 15 1.5812464746045694)
+    (2 0 0.5)
+    (11 19 1.1869717539906937)
+    (6 12 1.2691183073525347)
+    (1 5 1.7712437491614221)
+    (7 13 1.2324867603589635)
+    (4 7 1.226294385530917)
+    (8 17 1.2787536009528289)
+    (14 1 0.3962406251802891)
+    (14 9 0.8648579046593244)
+    (3 17 1.8294828004351504)))
+
+
+
 (define gen (generarPoblacion 100))
-(algoritmo-genetico gen 100)
+(algoritmo-genetico gen 500)
+
+(define arbol
+  (list logValido
+        (list restaValida 5.814267 'x)
+        (list sumaValida 'y 'x)))
+
+;(evalArbol arbol 18 18)
