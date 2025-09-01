@@ -26,14 +26,7 @@
       ((list? A) (append (nivel (cadr A) (- n 1)) (nivel (caddr A) (- n 1))))
       (else (list)))))
 
-;--- Reconstruir ---;
-; Dominio:
-; Codominio:
-(define recons-inv-Arb
-  (lambda (A)
-    (cond
-      ((or (null? A) (not (list? A))) A)
-      (else (list (car A) (recons-inv-Arb (caddr A)) (recons-inv-Arb (cadr A)))))))
+
 
 ;--- Elemento en Índice ---;
 ; Dominio:
@@ -95,7 +88,7 @@
 (define realRand
   (lambda ()
     (cond
-    ((< (random) 0.25) (precisionK (* -1 (* (random) (expt 10 (random 2)))) 6))
+    ((< (random) 0.5) (precisionK (* -1 (* (random) (expt 10 (random 2)))) 6))
     (else (precisionK (* (random) (expt 10 (random 2))) 6)))))
 
 ;--- X ---;
@@ -258,7 +251,7 @@
         sumaValida
         0
         (map (lambda (p) (cond ((eq? (evalArbol A (car p) (cadr p)) 'error) COTA_ERROR)
-                 (else (expValida (restaValida (caddr p) (evalArbol A (car p) (cadr p))) 2))))
+                 (else (expValida (/ (restaValida (caddr p) (evalArbol A (car p) (cadr p))) (+ 1 (abs (caddr p)))) 2))))
              pts))))))
 
 ;--- X ---;
@@ -300,8 +293,8 @@
   (lambda (A)
     (cond
       ((null? (filter number? (nivel A (altura A)))) 0)
-      (else  (elementoEn (filter number? (nivel A (altura A))) 
-          (random (length (filter number? (nivel A (altura A))) ) )))
+      (else (elementoEn (filter number? (nivel A (altura A))) 
+          (random (length (filter number? (nivel A (altura A)))))))
       )))
    
 
@@ -388,6 +381,12 @@
       (else (list (car A) (cadr A) (pegar-subArbol (caddr A) (cdr ruta)))))))
 
 
+(define cambiar-hojas-variables
+  (lambda (A) ;(print "penis") (newline)
+    (cond
+      ((or (not (list? A)) (null? A)) (cond ((< (random) 0.5) 'x) (else 'y)))
+      (else (list (car A) (cambiar-hojas-variables (cadr A)) (cambiar-hojas-variables (caddr A))))
+    )))
 
 ;==== MUTACIONES Y CRUCES ====;
 
@@ -398,7 +397,7 @@
   (lambda (A p)
     (cond
       ((< p 0.5) (quitar-rama A (elegirHoja A '()))) ; Agarra una rama y la remplaza por un valor 'x,'y o n / n <- R
-      ((< p 0.75) (recons-inv-Arb A)) ; Cambia cada valor, y cada rama derecha por su izquierda, y viceveresa.
+      ((< p 0.75) (cambiar-hojas-variables A)) 
       (else (pegar-subArbol A (pop (elegirHoja A '()))))))) ; Añade un arbol aletorio al arbol, remplaza una hoja para hacerlo.
 
 ;--- Mutar ---;
@@ -418,16 +417,22 @@
 ;--- Cruce ---;
 ; Dominio:
 ; Codominio:
-(define cruces
-  (lambda (A B)
+(define cruces-aux
+  (lambda (cruce valor-cruce)
     (cond
-      ((null? B) A)
-      ((null? A) B)
-      ((< (random) 0.1) (supermutar (list (car A) (cadr A) (caddr B)) (random)))
-      ((< (random) 0.15) (mutar (list (car A) (cadr A) (caddr B)) (random))) 
-      (else (list (car A) (cadr A) (caddr B))))))
+      ((< (random) 0.05) (supermutar cruce (random)))
+      ((< (random) 0.1) (mutar cruce (random)))
+      (else cruce)
+    )))
 
-    
+(define cruces
+  (lambda(A B)
+  (cond
+    ((null? B) A)
+    ((null? A) B)
+    (else (cruces-aux (list (car A) (cadr A) (caddr B)) 
+      (cercaniaXYZ (list (car A) (cadr A) (caddr B))) ))
+  )))
 ;--- X ---;
 ; Dominio:
 ; Codominio:
@@ -468,7 +473,7 @@
 (define arbol-altura-n 
   (lambda (n)
     (cond
-      ((zero? n) (hoja-aleatoria (random)))
+      ((zero? n) (hoja-aleatoria (realRand)))
       (else (list (elementoEn opsPosibles (random (length opsPosibles))) (arbol-altura-n (- n 1)) (arbol-altura-n (- n 1)))))))
 
 ;--- X ---;
@@ -477,7 +482,7 @@
 (define arbol-aleatorio
   (lambda (n m) ; n es la cantidad de subarboles que quiero, m es la altura maxima de cada subarbol m<-N ^ m<-[1,+oo[. (m!=0).
     (cond
-      ((= n 1) (arbol-altura-n (+ m 1)))
+      ((= n 1) (arbol-altura-n (+ 2 (random 3))))
       (else (list (elementoEn opsPosibles (random (length opsPosibles))) (arbol-aleatorio (- n 1) m) (arbol-aleatorio (- n 1) m)))))) 
 
 
@@ -491,7 +496,7 @@
   (lambda (n)
     (cond
       ((zero? n) (crearSet))
-      (else (cons (arbol-aleatorio (+ 1 (random 1)) (+ 1 (random 1))) (generarPoblacion (- n 1)))))))
+      (else (cons (arbol-aleatorio (+ 1 (random 2)) (+ 1 (random 2))) (generarPoblacion (- n 1)))))))
 
 ;--- X ---;
 ; Dominio:
@@ -499,20 +504,38 @@
 (define mejorGen
   (lambda (genActual fits)
     (print "Cerc") (print (map (lambda (ind) (cercaniaXYZ ind)) genActual)) (newline) (newline)
+    (print "ELITE: ") (print (escogerElite genActual fits (apply max fits))) (newline) (newline)
     ;(print (fitness (map (lambda (ind) (cercaniaXYZ ind)) genActual) (totalGen (map (lambda (ind) (cercaniaXYZ ind)) genActual)))) (newline) (newline)
     (list (escogerElite genActual fits (apply max fits)) )))
 
 ;--- X ---;
 ; Dominio:
 ; Codominio:
+(define generar-descendencia-aux
+  (lambda(DES P n fits cruce)
+  (cond
+  ((zero? n) DES)
+  ((member cruce DES equal?) (generar-descendencia-aux DES P n fits (cruces (selectIndiv P (selectIntervalo fits 0) (random)) (selectIndiv P (selectIntervalo fits 0) (random)))))
+  (else (cons cruce (generar-descendencia-aux DES P (- n 1) fits (cruces (selectIndiv P (selectIntervalo fits 0) (random)) (selectIndiv P (selectIntervalo fits 0) (random))) )))
+  )))
+
+;--- X ---;
+; Dominio:
+; Codominio:
 (define generar-descendencia
   (lambda (DES P n fits)  ; Descendencia, padres, numero de hijos.
-  (cond
-    ((zero? n) DES)
-    (else (cons 
-      (cruces (selectIndiv P (selectIntervalo fits 0) (random)) (selectIndiv P (selectIntervalo fits 0) (random))) 
-      (generar-descendencia DES P (- n 1) fits)) )
-  )))
+    (generar-descendencia-aux DES P n fits 
+      (cruces (selectIndiv P (selectIntervalo fits 0) (random)) (selectIndiv P (selectIntervalo fits 0) (random))))
+  ))
+
+;--- X ---;
+; Dominio:
+; Codominio:
+(define get-fitness
+  (lambda (PG)
+      (fitness (map (lambda (ind) (cercaniaXYZ ind)) PG)
+          (totalGen (map (lambda (ind) (cercaniaXYZ ind)) PG)))
+  ))
 
 ;--- X ---;
 ; Dominio:
@@ -520,12 +543,10 @@
 (define algoritmo-genetico
   (lambda(PG n)
   (cond
-  ((zero? n) (print "fin") (car (mejorGen PG (fitness (map (lambda (ind) (cercaniaXYZ ind)) PG) (totalGen (map (lambda (ind) (cercaniaXYZ ind)) PG))))))
-  ((>= 0.25 (cercaniaXYZ (car (mejorGen PG
-          (fitness (map (lambda (ind) (cercaniaXYZ ind)) PG)
-                    (totalGen (map (lambda (ind) (cercaniaXYZ ind)) PG))))))) (car (mejorGen PG (fitness (map (lambda (ind) (cercaniaXYZ ind)) PG) (totalGen (map (lambda (ind) (cercaniaXYZ ind)) PG))))))
-  (else (algoritmo-genetico (generar-descendencia (mejorGen PG (fitness (map (lambda (ind) (cercaniaXYZ ind)) PG) (totalGen (map (lambda (ind) (cercaniaXYZ ind)) PG)))) PG (- (length PG) 1)
-  (fitness (map (lambda (ind) (cercaniaXYZ ind)) PG) (totalGen (map (lambda (ind) (cercaniaXYZ ind)) PG)))) 
+  ((zero? n) (print "fin") (car (mejorGen PG (get-fitness PG))))
+  ((>= 0.05 (cercaniaXYZ (car (mejorGen PG (get-fitness PG) )))) 
+    (car (mejorGen PG (get-fitness PG))))
+  (else (algoritmo-genetico (generar-descendencia (mejorGen PG (get-fitness PG) ) PG (- (length PG) 1) (get-fitness PG)) 
   (- n 1)))
   )))
 
@@ -545,7 +566,7 @@
     (6 14 105.79591836734694)))
 
 
-(define pts
+(define pts2
   '((4 17 -2.4497720911755554)
     (18 18 89295665425899.97)
     (14 15 -5886448.888255767)
@@ -631,7 +652,7 @@
     (12 6 18)))
 
 
-(define pts5
+(define pts
   '((6 10 -64)
     (6 9 -45)
     (19 9 280)
@@ -672,7 +693,6 @@
     (4 2 12)
     (1 7 -48)
     (2 3 -5)))
-
 
 (define pts6
   '((11 3 0.6274735630753033)
@@ -716,14 +736,48 @@
     (14 9 0.8648579046593244)
     (3 17 1.8294828004351504)))
 
-
-
+(define pts11
+  (list
+   (list 2 3 0.1353352832366127)    ; e⁻¹/ln(6) ≈ 0.3678/1.7917 ≈ 0.205
+   (list 3 2 7.38905609893065)      ; e¹/ln(6) ≈ 2.718/1.7917 ≈ 1.517
+   (list 1 4 0.049787068367863944)  ; e⁻³/ln(4) ≈ 0.0497/1.3862 ≈ 0.0358
+   (list 4 1 54.598150033144236)    ; e³/ln(4) ≈ 20.085/1.3862 ≈ 14.48
+   (list 2 5 0.006737946999085467)  ; e⁻³/ln(10) ≈ 0.0497/2.3025 ≈ 0.0216
+   (list 5 2 148.4131591025766)     ; e³/ln(10) ≈ 20.085/2.3025 ≈ 8.72
+   (list 3 4 0.36787944117144233)   ; e⁻¹/ln(12) ≈ 0.3678/2.4849 ≈ 0.148
+   (list 4 3 2.718281828459045)     ; e¹/ln(12) ≈ 2.718/2.4849 ≈ 1.094
+   (list 1 2 0.36787944117144233)   ; e⁻¹/ln(2) ≈ 0.3678/0.6931 ≈ 0.530
+   (list 2 1 2.718281828459045)     ; e¹/ln(2) ≈ 2.718/0.6931 ≈ 3.921
+   (list 5 5 1.0)                   ; e⁰/ln(25) = 1/3.2188 ≈ 0.310
+   (list 4 6 0.1353352832366127)    ; e⁻²/ln(24) ≈ 0.1353/3.1780 ≈ 0.0426
+   (list 6 4 54.598150033144236)    ; e²/ln(24) ≈ 7.389/3.1780 ≈ 2.324
+   (list 3 5 0.049787068367863944)  ; e⁻²/ln(15) ≈ 0.0497/2.7080 ≈ 0.0183
+   (list 5 3 7.38905609893065)      ; e²/ln(15) ≈ 7.389/2.7080 ≈ 2.727
+   (list 2 7 0.0024787521766663585) ; e⁻⁵/ln(14) ≈ 0.0067/2.6390 ≈ 0.0025
+   (list 7 2 403.4287934927351)     ; e⁵/ln(14) ≈ 148.41/2.6390 ≈ 56.21
+   (list 4 8 0.01831563888873418)   ; e⁻⁴/ln(32) ≈ 0.0183/3.4657 ≈ 0.0053
+   (list 8 4 2980.9579870417283)    ; e⁴/ln(32) ≈ 54.59/3.4657 ≈ 15.75
+   (list 6 7 0.36787944117144233))) ; e⁻¹/ln(42) ≈ 0.3678/3.7376 ≈ 0.0984
+  
 (define gen (generarPoblacion 100))
 (algoritmo-genetico gen 500)
 
 (define arbol
-  (list logValido
-        (list restaValida 5.814267 'x)
-        (list sumaValida 'y 'x)))
+  (list sumaValida
+        (list divValida
+              (list restaValida 'x 'y)
+              (list divValida
+                    (list expValida
+                          (list mulValida
+                                (list restaValida 0.874322 0.385051)
+                                (list sumaValida 'y 'x))
+                          (list divValida
+                                (list expValida 0.664559 0.135279)
+                                (list expValida 9.376439 0.512026)))
+                    'y))
+        (list restaValida 'x 'y)))
 
-;(evalArbol arbol 18 18)
+;(altura arbol)
+;(evalArbol arbol 4 17)
+;(evalArbol arbol 6 0)
+;(evalArbol arbol 5 1)
