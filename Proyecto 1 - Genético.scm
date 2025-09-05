@@ -177,7 +177,7 @@
                     (cons 'loga_b logValido)
                     (cons '** expValida)))
 
-;--- Operaciones Posibles ---;}
+;--- Operaciones Posibles ---;
 (define opsPosibles (map (lambda(i) (cdr i)) opsValidas)) ;Lista de funciones
 
 
@@ -403,18 +403,51 @@
 ;--- Mutar ---;
 ; Dominio:
 ; Codominio:
+;--- Mutación fina de números ---;
+; Hace pequeños ajustes a números existentes
+(define mutacion-fina-nums
+  (lambda (A nvl factor)
+    (cond 
+      ((or (not (list? A)) (null? A)) 
+       (cond ((number? A) (precisionK (+ A (* (- (* 2 (random)) 1) factor A)) 6))
+             (else A)))
+      ((zero? nvl) A)
+      ((list? A) (list (car A) (mutacion-fina-nums (cadr A) (- nvl 1) factor) 
+                                (mutacion-fina-nums (caddr A) (- nvl 1) factor)))
+      (else A))))
+
+;--- Mutación estructural ---;
+; Cambia la estructura del árbol pero preserva funcionalidad
+(define mutacion-estructural
+  (lambda (A)
+    (cond
+      ((or (null? A) (not (list? A)) (< (altura A) 2)) A)
+      ((< (random) 0.3) (list (elementoEn opsPosibles (random (length opsPosibles))) 
+                              (caddr A) (cadr A))) ;; Intercambia hijos
+      ((< (random) 0.6) (list (car A) 
+                              (list (elementoEn opsPosibles (random (length opsPosibles)))
+                                    (cadr A) (hoja-aleatoria (random)))
+                              (caddr A))) ;; Anida izquierdo
+      (else (list (car A) (cadr A)
+                  (list (elementoEn opsPosibles (random (length opsPosibles)))
+                        (caddr A) (hoja-aleatoria (random))))))))  ;; Anida derecho
+
+;--- Mutar mejorado ---;
 (define mutar
   (lambda (A p)
     (cond
       ((< (altura A) 1) A)
-      ((< p 0.25) (cambiarOp A (random (altura A)) (elementoEn opsPosibles (random (length opsPosibles))) ))
-      ((< p 0.50) (cambiarNum A (altura A) (realRand) (elegirNumRand A)))
-      ((< p 0.75) (swapHojas A (elegirHoja A '()) (elegirHoja A '())))
-      (else (cambiarOp (cambiarNum A (altura A) (realRand) (elegirNumRand A)) 
-                       (random (altura A)) 
-                       (elementoEn opsPosibles (random (length opsPosibles))))))))
+      ((< p 0.15) (cambiarOp A (random (altura A)) (elementoEn opsPosibles (random (length opsPosibles))) ))
+      ((< p 0.30) (cambiarNum A (altura A) (realRand) (elegirNumRand A)))
+      ((< p 0.45) (mutacion-fina-nums A (altura A) 0.1)) ;; Ajustes finos
+      ((< p 0.60) (swapHojas A (elegirHoja A '()) (elegirHoja A '())))
+      ((< p 0.75) (mutacion-estructural A)) ;; Nueva mutación estructural
+      ((< p 0.90) (cambiarOp (cambiarNum A (altura A) (realRand) (elegirNumRand A)) 
+                             (random (altura A)) 
+                             (elementoEn opsPosibles (random (length opsPosibles)))))
+      (else (mutacion-fina-nums (mutacion-estructural A) (altura A) 0.05)))))  ;; Combinada
 
-;--- Cruce ---;
+;--- Cruces mejorados ---;
 ; Dominio:
 ; Codominio:
 (define cruces-aux
@@ -425,14 +458,45 @@
       (else cruce)
     )))
 
+;--- Cruce por altura balanceada ---;
+; Intercambia subárboles de altura similar
+(define cruce-balanceado
+  (lambda (A B)
+    (cond
+      ((or (null? A) (null? B)) (cond ((null? A) B) (else A)))
+      ((and (< (abs (- (altura A) (altura B))) 2) (> (random) 0.5))
+       (list (car A) (cadr B) (caddr A)))
+      (else (list (car B) (cadr A) (caddr B))))))
+
+;--- Cruce uniforme ---;
+; Intercambia nodos con probabilidad 0.5
+(define cruce-uniforme-aux
+  (lambda (A B)
+    (cond
+      ((or (null? A) (null? B) (not (list? A)) (not (list? B))) 
+       (cond ((< (random) 0.5) A) (else B)))
+      (else (list (cond ((< (random) 0.5) (car A)) (else (car B)))
+                  (cruce-uniforme-aux (cadr A) (cadr B))
+                  (cruce-uniforme-aux (caddr A) (caddr B)))))))
+
+(define cruce-uniforme
+  (lambda (A B)
+    (cond
+      ((or (null? A) (null? B)) (cond ((null? A) B) (else A)))
+      (else (cruce-uniforme-aux A B)))))
+
+;--- Selector de tipo de cruce ---;
 (define cruces
   (lambda(A B)
   (cond
     ((null? B) A)
     ((null? A) B)
+    ((< (random) 0.4) (cruces-aux (cruce-balanceado A B) (cercaniaXYZ (cruce-balanceado A B))))
+    ((< (random) 0.7) (cruces-aux (cruce-uniforme A B) (cercaniaXYZ (cruce-uniforme A B))))
     (else (cruces-aux (list (car A) (cadr A) (caddr B)) 
       (cercaniaXYZ (list (car A) (cadr A) (caddr B))) ))
   )))
+
 ;--- X ---;
 ; Dominio:
 ; Codominio:
@@ -543,7 +607,7 @@
 (define algoritmo-genetico
   (lambda(PG n)
   (cond
-  ((zero? n) (print "fin") (car (mejorGen PG (get-fitness PG))))
+  ((zero? n) (print "fin - max generaciones") (newline) (car (mejorGen PG (get-fitness PG))))
   ((>= 0.05 (cercaniaXYZ (car (mejorGen PG (get-fitness PG) )))) 
     (car (mejorGen PG (get-fitness PG))))
   (else (algoritmo-genetico (generar-descendencia (mejorGen PG (get-fitness PG) ) PG (- (length PG) 1) (get-fitness PG)) 
@@ -652,7 +716,7 @@
     (12 6 18)))
 
 
-(define pts
+(define pts5
   '((6 10 -64)
     (6 9 -45)
     (19 9 280)
@@ -736,7 +800,7 @@
     (14 9 0.8648579046593244)
     (3 17 1.8294828004351504)))
 
-(define pts11
+(define pts7
   (list
    (list 2 3 0.1353352832366127)    ; e⁻¹/ln(6) ≈ 0.3678/1.7917 ≈ 0.205
    (list 3 2 7.38905609893065)      ; e¹/ln(6) ≈ 2.718/1.7917 ≈ 1.517
@@ -762,22 +826,9 @@
 (define gen (generarPoblacion 100))
 (algoritmo-genetico gen 500)
 
-(define arbol
-  (list sumaValida
-        (list divValida
-              (list restaValida 'x 'y)
-              (list divValida
-                    (list expValida
-                          (list mulValida
-                                (list restaValida 0.874322 0.385051)
-                                (list sumaValida 'y 'x))
-                          (list divValida
-                                (list expValida 0.664559 0.135279)
-                                (list expValida 9.376439 0.512026)))
-                    'y))
-        (list restaValida 'x 'y)))
+(define arbol (list))
 
 ;(altura arbol)
-;(evalArbol arbol 4 17)
+;(evalArbol arbol 19 15)
 ;(evalArbol arbol 6 0)
 ;(evalArbol arbol 5 1)
