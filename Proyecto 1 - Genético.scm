@@ -1,9 +1,7 @@
 #lang racket
 (require plot racket/gui/base)
-(plot-new-window? #f)
 
 ;==== FUNCIONES AUXILIARES ====;
-
 ;--- Altura ---;
 ; Dominio: Un árbol.
 ; Codominio: Un entero (altura del árbol).
@@ -13,7 +11,6 @@
       ((null? A) -1)
       ((not (list? A)) 0)
       (else (+ 1 (max (altura (cadr A)) (altura (caddr A))))))))
-
 
 ;--- Nivel ---;
 ; Dominio: Un árbol y un entero n (nivel).
@@ -26,8 +23,6 @@
       ((not (list? A)) (list))
       ((list? A) (append (nivel (cadr A) (- n 1)) (nivel (caddr A) (- n 1))))
       (else (list)))))
-
-
 
 ;--- Elemento en Índice ---;
 ; Dominio: Una lista y un entero n.
@@ -92,7 +87,7 @@
     ((< (random) 0.5) (precisionK (* -1 (* (random) (expt 10 (random 2)))) 6))
     (else (precisionK (* (random) (expt 10 (random 2))) 6)))))
 
-;--- Real Random No negativo ---;
+;--- Real Random Positivo ---;
 ; Dominio: Vacio.
 ; Codominio: Un valor real no negativo.
 (define realPositiveRand
@@ -100,10 +95,8 @@
     (precisionK (* (random) (expt 10 (random 2))) 6)))
 
 
-
 ;==== OPERACIONES ====;
-
-;--- divValida ---;
+;--- División válida ---;
 ; Dominio: Dos números reales a y b.
 ; Codominio: El cociente a/b o 'error si la división no es válida.
 (define divValida
@@ -113,7 +106,7 @@
       ((= b 0) 'error)
       (else (/ a b)))))
 
-;--- expValida ---;
+;--- Exp válida ---;
 ; Dominio: Dos números reales b (base) y e (exponente).
 ; Codominio: El resultado de b^e o 'error si la operación no es válida.
 (define expValida
@@ -126,7 +119,7 @@
       ((> (abs b) 1000) (expt (+ 1 (random 100)) e))
       (else (expt b e)))))
 
-;--- logValido ---;
+;--- Log válido ---;
 ; Dominio: Dos números reales a y b.
 ; Codominio: El logaritmo de a en base b o 'error si no es válido.
 (define logValido
@@ -136,7 +129,7 @@
       ((or (<= a 0) (<= b 0) (= b 1)) 'error)
       (else (divValida (log a) (log b))))))
 
-;--- sumaValida ---;
+;--- Suma válida ---;
 ; Dominio: Dos números reales a y b.
 ; Codominio: La suma a+b o 'error si no es válida.
 (define sumaValida
@@ -147,7 +140,7 @@
         (else (+ a b) 
     ))))
 
-;--- restaValida ---;
+;--- Resta válida ---;
 ; Dominio: Dos números reales a y b.
 ; Codominio: La resta a-b o 'error si no es válida.
 (define restaValida
@@ -158,7 +151,7 @@
         (else (- a b) 
     ))))
 
-;--- mulValida ---;
+;--- Multiplicación válida ---;
 ; Dominio: Dos números reales a y b.
 ; Codominio: El producto a*b o 'error si no es válido.
 (define mulValida
@@ -181,17 +174,18 @@
 ;--- Operaciones Posibles ---;
 (define opsPosibles (map (lambda(i) (cdr i)) opsValidas)) ;Lista de funciones
 
+;--- Cota de error ---;
+(define COTA_ERROR 1.0e7)
 
 
 ;==== SET ====;
-
-;--- crearSet ---;
+;--- Crear Set ---;
 ; Dominio: Vacio.
 ; Codominio: Un conjunto vacío (representado como lista).
 (define crearSet
   (lambda () (list)))
 
-;--- insertarSet ---;
+;--- Insertar Set ---;
 ; Dominio: Un conjunto S y un elemento x.
 ; Codominio: El conjunto S con x insertado (sin duplicados).
 (define insertarSet
@@ -201,13 +195,11 @@
       (else (cons x S)))))
 
 
-
 ;==== MANEJO DE INDIVIDUOS ====;
-
-;--- evalOps-helper ---;
+;--- Eval operación aux ---;
 ; Dominio: Un valor resultante de una operación.
 ; Codominio: Un número real o COTA_ERROR.
-(define evalOps-helper
+(define evalOps-aux
   (lambda (result)
     (cond
       ((eq? result 'error) COTA_ERROR)
@@ -215,8 +207,7 @@
       ((equal? result -inf.0) COTA_ERROR)
       (else result))))
 
-    
-;--- evalOps ---;
+;--- Eval operación ---;
 ; Dominio: Una lista de parámetros paramOp y una operación op.
 ; Codominio: El resultado de aplicar op a paramOp o COTA_ERROR.
 (define evalOps
@@ -225,9 +216,9 @@
       ((member 'error paramOp equal?) COTA_ERROR)
       ((member +inf.0 paramOp equal?) COTA_ERROR)
       ((member -inf.0 paramOp equal?) COTA_ERROR)
-      (else (evalOps-helper (apply op paramOp))))))
+      (else (evalOps-aux (apply op paramOp))))))
 
-;--- evalArbol ---;
+;--- Eval árbol ---;
 ; Dominio: Un árbol de operaciones y dos números reales x e y.
 ; Codominio: Un número real resultante de evaluar el árbol.
 (define evalArbol
@@ -241,10 +232,8 @@
       (else (evalOps (map (lambda (subArb) (evalArbol subArb x y)) (cdr arbol)) (car arbol))))))
 
 
-
 ;==== PROCESO GENÉTICO ====;
-
-;--- cercaniaXYZ ---;
+;--- Cercania XYZ ---;
 ; Dominio: Un árbol de operaciones A.
 ; Codominio: Un número real que representa la cercanía o COTA_ERROR.
 (define cercaniaXYZ
@@ -259,7 +248,7 @@
                  (else (expValida (/ (restaValida (caddr p) (evalArbol A (car p) (cadr p))) (+ 1 (abs (caddr p)))) 2))))
              pts))))))
 
-;--- totalGen ---;
+;--- TotalGen ---;
 ; Dominio: Una lista difs con los valores de cercaniaXYZ de los individuos.
 ; Codominio: Un número real que representa el total acumulado.
 (define totalGen
@@ -268,7 +257,7 @@
                                   ((equal? d 'error) (/ 1 1000))
                                   (else (/ 1 (+ 1 d))))) difs))))
 
-;--- fitness ---;
+;--- Fitness ---;
 ; Dominio: Una lista difs de valores de cercanía y un número real total.
 ; Codominio: Una lista de números reales que representan los valores de fitness.
 (define fitness
@@ -277,8 +266,8 @@
                       ((equal? d 'error) (/ (/ 1 1000) total))
                       (else (/ (/ 1 (+ 1 d)) total)))) difs)))
 
-;--- escogerElite ---;
-; Dominio: Una lista de individuos S, una lista de valores F y un número real max.
+;--- Escoger élite ---;
+; Dominio: Una lista de individuos S, una lista de valores de fitness F y un número real max.
 ; Codominio: Un individuo de la lista S.
 (define escogerElite
   (lambda (S F max)
@@ -288,10 +277,8 @@
       (else (escogerElite (cdr S) (cdr F) max)))))
 
 
-
 ;==== AUXILIARES MUTACIÓN ====;
-
-;--- elegirNumRand ---;
+;--- Elegir num rand ---;
 ; Dominio: Un árbol A.
 ; Codominio: Un número real (hoja del árbol) o 0 si no hay hojas numéricas.
 (define elegirNumRand
@@ -302,7 +289,7 @@
           (random (length (filter number? (nivel A (altura A)))))))
       )))
    
-;--- elegirHoja ---;
+;--- Elegir hoja ---;
 ; Dominio: Un árbol A y una ruta.
 ; Codominio: Una lista que representa la ruta hacia una hoja.
 (define elegirHoja
@@ -312,7 +299,7 @@
       ((< (random) 0.5 ) (cons 0 (elegirHoja (cadr A) ruta)))
       (else (cons 1 (elegirHoja (caddr A) ruta))))))
 
-;--- cambiarElemento ---;
+;--- Cambiar elemento ---;
 ; Dominio: Un árbol A, una ruta R y un elemento e.
 ; Codominio: El árbol A con el elemento en la ruta R reemplazado por e.
 (define cambiarElemento
@@ -322,14 +309,14 @@
     ((= 0 (car R)) (list (car A) (cambiarElemento (cadr A) (cdr R) e ) (caddr A)))
     (else (list (car A) (cadr A) (cambiarElemento (caddr A) (cdr R) e))))))
 
-;--- swapHojas ---;
+;--- Swap de hojas ---;
 ; Dominio: Un árbol A y dos rutas R1 y R2.
 ; Codominio: El árbol A con las hojas en R1 y R2 intercambiadas.
 (define swapHojas
   (lambda (A R1 R2)
     (cambiarElemento (cambiarElemento A (pop R2) (top R1)) (pop R1) (top R2))))
 
-;--- cambiarOp ---;
+;--- Cambiar operación ---;
 ; Dominio: Un árbol A, un entero nvl y un operador op.
 ; Codominio: El árbol A con el operador cambiado en el nivel dado.
 (define cambiarOp
@@ -343,7 +330,7 @@
       ((<= (random) 0.5) (list (car A) (cambiarOp (cadr A) (- nvl 1) op) (caddr A)))
       (else (list (car A) (cadr A) (cambiarOp (caddr A) (- nvl 1) op))))))
 
-;--- cambiarNum ---;
+;--- Cambiar número ---;
 ; Dominio: Un árbol A, un entero nvl, un número nuevoNum y una hoja.
 ; Codominio: El árbol A con la hoja reemplazada por nuevoNum en el nivel dado.
 (define cambiarNum
@@ -356,7 +343,38 @@
                                 (cambiarNum (caddr A) (- nvl 1) nuevoNum hoja)))
       (else A))))
 
-;--- quitar-rama-aux ---;
+;--- Cambiar números ---;
+; Dominio: Un árbol A, un entero nvl y un número real num.
+; Codominio: Un árbol con números modificados aleatoriamente en un nivel.
+(define cambiarNums
+  (lambda (A nvl num)
+    (cond 
+      ((or (not (list? A)) (null? A)) 
+       (cond ((number? A) (precisionK (+ A (* (- (* 2 (random)) 1) num A)) 6))
+             (else A)))
+      ((zero? nvl) A)
+      ((list? A) (list (car A) (cambiarNums (cadr A) (- nvl 1) num) 
+                                (cambiarNums (caddr A) (- nvl 1) num)))
+      (else A))))
+
+;--- Cambiar estructura ---;
+; Dominio: Un árbol A.
+; Codominio: Un árbol con su estructura cambiada aleatoriamente.
+(define cambiarEstruc
+  (lambda (A)
+    (cond
+      ((or (null? A) (not (list? A)) (< (altura A) 2)) A)
+      ((< (random) 0.3) (list (elementoEn opsPosibles (random (length opsPosibles))) 
+                              (caddr A) (cadr A)))
+      ((< (random) 0.6) (list (car A) 
+                              (list (elementoEn opsPosibles (random (length opsPosibles)))
+                                    (cadr A) (hoja-aleatoria (random)))
+                              (caddr A)))
+      (else (list (car A) (cadr A)
+                  (list (elementoEn opsPosibles (random (length opsPosibles)))
+                        (caddr A) (hoja-aleatoria (random))))))))
+
+;--- Quitar rama aux ---;
 ; Dominio: Un árbol A y una ruta.
 ; Codominio: El árbol A con la subrama eliminada en la ruta indicada.
 (define quitar-rama-aux
@@ -367,14 +385,14 @@
       ((= 0 (car ruta)) (list (car A) (quitar-rama-aux (cadr A) (cdr ruta)) (caddr A)))
       (else (list (car A) (cadr A) (quitar-rama-aux (caddr A) (cdr ruta)))))))
 
-;--- quitar-rama ---;
+;--- Quitar rama ---;
 ; Dominio: Un árbol A y una ruta.
 ; Codominio: El árbol A con una rama eliminada en una posición aleatoria de la ruta.
 (define quitar-rama
   (lambda (A ruta)
     (quitar-rama-aux A (primeros-n ruta (+ 1 (random (- (length ruta) 2)))))))
 
-;--- pegar-subArbol ---;
+;--- Pegar subárbol ---;
 ; Dominio: Un árbol A y una ruta.
 ; Codominio: El árbol A con un subárbol aleatorio pegado en la ruta indicada.
 (define pegar-subArbol
@@ -384,46 +402,77 @@
       ((zero? (car ruta)) (list (car A) (pegar-subArbol (cadr A) (cdr ruta)) (caddr A)))
       (else (list (car A) (cadr A) (pegar-subArbol (caddr A) (cdr ruta)))))))
 
-    
-;--- cambiar-hojas-variables ---;
+;--- Cambiar hojas variables ---;
 ; Dominio: Un árbol A.
 ; Codominio: El árbol A con las hojas reemplazadas aleatoriamente por 'x o 'y.
 (define cambiar-hojas-variables
   (lambda (A)
     (cond
       ((or (not (list? A)) (null? A)) (cond ((< (random) 0.5) 'x) (else 'y)))
-      (else (list (car A) (cambiar-hojas-variables (cadr A)) (cambiar-hojas-variables (caddr A))))
-    )))
-
+      (else (list (car A) (cambiar-hojas-variables (cadr A)) (cambiar-hojas-variables (caddr A)))))))
 
 
 ;==== MUTACIONES Y CRUCES ====;
-
-;--- supermutar ---;
+;--- Supermutar ---;
 ; Dominio: Un árbol A y un número real p.
 ; Codominio: Un árbol A con modificaciones aleatorias.
 (define supermutar
   (lambda (A p)
     (cond
-      ((< p 0.5) (quitar-rama A (elegirHoja A '()))) ; Agarra una rama y la remplaza por un valor 'x,'y o n / n <- R
+      ((< p 0.5) (quitar-rama A (elegirHoja A '())))
       ((< p 0.75) (cambiar-hojas-variables A)) 
-      (else (pegar-subArbol A (pop (elegirHoja A '()))))))) ; Añade un arbol aletorio al arbol, remplaza una hoja para hacerlo.
+      (else (pegar-subArbol A (pop (elegirHoja A '())))))))
 
-;--- mutar ---;
+;--- Mutar ---;
 ; Dominio: Un árbol A y un número real p.
 ; Codominio: Un árbol A mutado aleatoriamente.
 (define mutar
   (lambda (A p)
     (cond
       ((< (altura A) 1) A)
-      ((< p 0.25) (cambiarOp A (random (altura A)) (elementoEn opsPosibles (random (length opsPosibles))) ))
-      ((< p 0.50) (cambiarNum A (altura A) (realRand) (elegirNumRand A)))
-      ((< p 0.75) (swapHojas A (elegirHoja A '()) (elegirHoja A '())))
-      (else (cambiarOp (cambiarNum A (altura A) (realRand) (elegirNumRand A)) 
-                       (random (altura A)) 
-                       (elementoEn opsPosibles (random (length opsPosibles))))))))
+      ((< p 0.15) (cambiarOp A (random (altura A)) (elementoEn opsPosibles (random (length opsPosibles))) ))
+      ((< p 0.30) (cambiarNum A (altura A) (realRand) (elegirNumRand A)))
+      ((< p 0.45) (cambiarNums A (altura A) 0.1))
+      ((< p 0.60) (swapHojas A (elegirHoja A '()) (elegirHoja A '())))
+      ((< p 0.75) (cambiarEstruc A))
+      ((< p 0.90) (cambiarOp (cambiarNum A (altura A) (realRand) (elegirNumRand A)) 
+                             (random (altura A)) 
+                             (elementoEn opsPosibles (random (length opsPosibles)))))
+      (else (cambiarNums (cambiarEstruc A) (altura A) 0.05)))))
 
-;--- cruces-aux ---;
+;--- Cruce con altura balanceada ---;
+; Dominio: Dos árboles A y B.
+; Codominio: Un árbol resultado del cruce de A y B.
+(define cruce-balanceado
+  (lambda (A B)
+    (cond
+      ((or (null? A) (null? B)) (cond ((null? A) B) (else A)))
+      ((and (< (abs (- (altura A) (altura B))) 2) (> (random) 0.5))
+       (list (car A) (cadr B) (caddr A)))
+      (else (list (car B) (cadr A) (caddr B))))))
+
+;--- Mezclar árboles aux ---;
+; Dominio: Dos árboles A y B.
+; Codominio: Un árbol resultado del cruce de A y B.
+(define mezclar-arboles-aux
+  (lambda (A B)
+    (cond
+      ((or (null? A) (null? B) (not (list? A)) (not (list? B))) 
+       (cond ((< (random) 0.5) A) (else B)))
+      (else (list (cond ((< (random) 0.5) (car A)) (else (car B)))
+                  (mezclar-arboles-aux (cadr A) (cadr B))
+                  (mezclar-arboles-aux (caddr A) (caddr B)))) )))
+
+;--- Mezclar árboles ---;
+; Dominio: Dos árboles A y B.
+; Codominio: Un árbol resultado del cruce de A y B.
+(define mezclar-arboles
+  (lambda (A B)
+    (cond
+      ((or (null? A) (null? B)) (cond ((null? A) B) (else A)))
+      (else (mezclar-arboles-aux A B)) )))
+
+;--- Cruces aux ---;
 ; Dominio: Un árbol cruce y un valor-cruce numérico.
 ; Codominio: Un árbol cruce posiblemente mutado o supermutado.
 (define cruces-aux
@@ -431,10 +480,9 @@
     (cond
       ((< (random) 0.05) (supermutar cruce (random)))
       ((< (random) 0.1) (mutar cruce (random)))
-      (else cruce)
-    )))
+      (else cruce) )))
 
-;--- cruces ---;
+;--- Cruces ---;
 ; Dominio: Dos árboles A y B.
 ; Codominio: Un nuevo árbol resultado del cruce de A y B.
 (define cruces
@@ -442,11 +490,12 @@
   (cond
     ((null? B) A)
     ((null? A) B)
+    ((< (random) 0.4) (cruces-aux (cruce-balanceado A B) (cercaniaXYZ (cruce-balanceado A B))))
+    ((< (random) 0.7) (cruces-aux (mezclar-arboles A B) (cercaniaXYZ (mezclar-arboles A B))))
     (else (cruces-aux (list (car A) (cadr A) (caddr B)) 
-      (cercaniaXYZ (list (car A) (cadr A) (caddr B))) ))
-  )))
+      (cercaniaXYZ (list (car A) (cadr A) (caddr B))) )))))
 
-;--- selectIntervalo ---;
+;--- Seleccionar Intervalo ---;
 ; Dominio: Una lista de valores de fitness y un número real rango.
 ; Codominio: Una lista de números reales que representan intervalos acumulados.
 (define selectIntervalo
@@ -455,8 +504,7 @@
       ((null? listaFits) (list))
       (else (cons (+ (car listaFits) rango) (selectIntervalo (cdr listaFits) (+ rango (car listaFits))))))))
 
-
-;--- selectIndiv ---;
+;--- Seleccionar Individuo ---;
 ; Dominio: Una lista genActual, una lista de intervalos listaInterv y un número real rand.
 ; Codominio: Un árbol seleccionado de genActual.
 (define selectIndiv
@@ -464,14 +512,12 @@
    (cond
     ((null? genActual) genActual)
     ((< rand (car listaInterv)) (car genActual))
-    (else (selectIndiv (cdr genActual) (cdr listaInterv) rand))))
-  )
+    (else (selectIndiv (cdr genActual) (cdr listaInterv) rand)))))
 
 
 
 ;==== GENERACIÓN DE ÁRBOLES ====;
-
-;--- hoja-aleatoria ---;
+;--- Hoja aleatoria ---;
 ; Dominio: Un número real p.
 ; Codominio: Un número real positivo o el símbolo 'x o 'y.
 (define hoja-aleatoria
@@ -481,7 +527,7 @@
         ((< p 0.66667) 'x)
         (else 'y))))
 
-;--- arbol-altura-n ---;
+;--- Arbol altura n ---;
 ; Dominio: Un número entero n (altura del árbol).
 ; Codominio: Un árbol de altura n con hojas aleatorias.
 (define arbol-altura-n 
@@ -490,7 +536,7 @@
       ((zero? n) (hoja-aleatoria (realRand)))
       (else (list (elementoEn opsPosibles (random (length opsPosibles))) (arbol-altura-n (- n 1)) (arbol-altura-n (- n 1)))))))
 
-;--- arbol-aleatorio ---;
+;--- Arbol aleatorio ---;
 ; Dominio: Dos números enteros n (cantidad de subárboles) y m (altura máxima).
 ; Codominio: Un árbol aleatorio con n subárboles de altura ≤ m.
 (define arbol-aleatorio
@@ -500,10 +546,8 @@
       (else (list (elementoEn opsPosibles (random (length opsPosibles))) (arbol-aleatorio (- n 1) m) (arbol-aleatorio (- n 1) m)))))) 
 
 
-
 ;==== MANEJO DE POBLACIONES ====;
-
-;--- generarPoblacion ---;
+;--- Generar poblacion ---;
 ; Dominio: Un número entero n.
 ; Codominio: Una lista de árboles aleatorios de tamaño n.
 (define generarPoblacion
@@ -512,7 +556,7 @@
       ((zero? n) (crearSet))
       (else (cons (arbol-aleatorio (+ 1 (random 2)) (+ 1 (random 2))) (generarPoblacion (- n 1)))))))
 
-;--- mejorGen ---;
+;--- Mejor individuo Gen ---;
 ; Dominio: Una lista genActual de árboles y una lista de valores de fitness fits.
 ; Codominio: Una lista con el árbol más apto (elite) de genActual.
 (define mejorGen
@@ -522,55 +566,44 @@
     ;(print (fitness (map (lambda (ind) (cercaniaXYZ ind)) genActual) (totalGen (map (lambda (ind) (cercaniaXYZ ind)) genActual)))) (newline) (newline)
     (list (escogerElite genActual fits (apply max fits)) )))
 
-;--- X ---;
-; Dominio: lista de árboles DES, lista de árboles P, número entero n,
-;          lista de números reales entre 0 y 1 inclusivo fits y un árbol cruce.
-; Codominio: lista de árboles.
+;--- Generar descendencia aux---;
+; Dominio: Una lista de árboles descendencia, lista de árboles padres, número entero n, lista de números reales entre 0 y 1 inclusivo fits y un árbol cruce.
+; Codominio: Una lista de árboles.
 (define generar-descendencia-aux
   (lambda(DES P n fits cruce)
   (cond
   ((zero? n) DES)
   ((member cruce DES equal?) (generar-descendencia-aux DES P n fits (cruces (selectIndiv P (selectIntervalo fits 0) (random)) (selectIndiv P (selectIntervalo fits 0) (random)))))
-  (else (cons cruce (generar-descendencia-aux DES P (- n 1) fits (cruces (selectIndiv P (selectIntervalo fits 0) (random)) (selectIndiv P (selectIntervalo fits 0) (random))) )))
-  )))
+  (else (cons cruce (generar-descendencia-aux DES P (- n 1) fits (cruces (selectIndiv P (selectIntervalo fits 0) (random)) (selectIndiv P (selectIntervalo fits 0) (random))) ))))))
 
-;--- X ---;
-; Dominio: lista de árboles DES, lista de árboles P, número entero n y
-;          lista de números reales entre 0 y 1 inclusivo fits.
-; Codominio: lista de árboles.
+;--- Generar descendencia ---;
+; Dominio: Una lista de árboles descendencia, lista de árboles padres, número entero n, lista de números reales entre 0 y 1 inclusivo fits.
+; Codominio: Una lista de árboles.
 (define generar-descendencia
-  (lambda (DES P n fits)  ; Descendencia, padres, numero de hijos.
+  (lambda (DES P n fits)
     (generar-descendencia-aux DES P n fits 
-      (cruces (selectIndiv P (selectIntervalo fits 0) (random)) (selectIndiv P (selectIntervalo fits 0) (random))))
-  ))
+      (cruces (selectIndiv P (selectIntervalo fits 0) (random)) (selectIndiv P (selectIntervalo fits 0) (random))))))
 
-;--- X ---;
+;--- Obtener fitness ---;
 ; Dominio: Lista de árboles de alguna generación.
 ; Codominio: Lista de números reales entre 0 y 1 inclusivo.
-(define get-fitness
+(define obt-fitness
   (lambda (PG)
       (fitness (map (lambda (ind) (cercaniaXYZ ind)) PG)
-          (totalGen (map (lambda (ind) (cercaniaXYZ ind)) PG)))
-  ))
+          (totalGen (map (lambda (ind) (cercaniaXYZ ind)) PG)))))
 
-;--- X ---;
+;--- Algoritmo Genético ---;
 ; Dominio: Lista de árboles de una generación, número entero n.
 ; Codominio: Un árbol.
 (define algoritmo-genetico
   (lambda(PG n)
   (cond
-  ;((zero? n) (print "fin-gen") (newline) (car (mejorGen PG (get-fitness PG))))
-  ((>= 0.05 (cercaniaXYZ (car (mejorGen PG (get-fitness PG) )))) 
-    (car (mejorGen PG (get-fitness PG))))
-  (else (algoritmo-genetico (generar-descendencia (mejorGen PG (get-fitness PG) ) PG (- (length PG) 1) (get-fitness PG)) 
-  (- n 1)))
-  )))
+  ;((zero? n) (print "fin-gen") (newline) (car (mejorGen PG (obt-fitness PG))))
+  ((>= 0.05 (cercaniaXYZ (car (mejorGen PG (obt-fitness PG) )))) (car (mejorGen PG (obt-fitness PG))))
+  (else (algoritmo-genetico (generar-descendencia (mejorGen PG (obt-fitness PG) ) PG (- (length PG) 1) (obt-fitness PG)) (- n 1))))))
 
 
-
-;==== DEFINICIÓN DE DATOS ====;
-(define COTA_ERROR 1.0e7)
-
+;==== DEFINICIÓN DE PUNTOS ====;
 (define pts1
   '((19 15 29346.35851851852)
     (2 9 1.0534979423868314)
@@ -582,7 +615,6 @@
     (2 13 0.504930966469428)
     (2 4 5.333333333333333)
     (6 14 105.79591836734694)))
-
 
 (define pts2
   '((4 17 -2.4497720911755554)
@@ -626,6 +658,47 @@
     (2 11 -0.011618783380305042)
     (19 5 581.8154927034864)))
 
+(define pts3
+  '((7 19 0.021467462815455557)
+    (15 5 0.8972897520305314)
+    (3 12 0.034300505648069725)
+    (4 16 0.02618158100704072)
+    (5 3 0.3234657858799432)
+    (14 10 0.09287287780685931)
+    (9 17 0.02363015892994423)
+    (17 17 0.06919428556089095)
+    (17 1 2.88274645317702e+86)
+    (19 3 110.46198121467432)
+    (15 17 0.03143716981725172)
+    (19 8 0.0535003236864474)
+    (3 16 0.02618158100704072)
+    (10 8 0.0502589029357979)
+    (2 18 0.02219768929739122)
+    (19 15 0.11946085767729647)
+    (4 12 0.034300505648069725)
+    (4 8 0.060623809023872356)
+    (5 5 0.4031782747928774)
+    (17 17 0.03294052780160192)
+    (16 14 0.0877734809884482)
+    (5 4 0.21784251308036023)
+    (14 3 4.655292450035863)
+    (12 2 17.95581981811268)
+    (12 2 4978.651181453867)
+    (15 18 0.02586177411353612)
+    (10 2 1.473903445060754)
+    (17 8 3.109408219964699)
+    (9 16 0.033032040793022216)
+    (12 9 0.059983006928122015)
+    (16 17 0.023835458764299447)
+    (17 13 0.030687867723187132)
+    (8 6 0.13131681414605237)
+    (6 1 0.657744623479457)
+    (14 13 0.08003365790226269)
+    (7 14 0.030372418985094643)
+    (9 2 91.18717719247881)
+    (9 11 0.04724676957863885)
+    (8 15 0.0281155302113515)
+    (14 7 56.43618334181874)))
 
 (define pts4
   '((7 1 8)
@@ -669,8 +742,7 @@
     (13 5 18)
     (12 6 18)))
 
-
-(define pts5
+(define pts
   '((6 10 -64)
     (6 9 -45)
     (19 9 280)
@@ -712,8 +784,7 @@
     (1 7 -48)
     (2 3 -5)))
 
-
-(define pts
+(define pts6
   '((11 3 0.6274735630753033)
     (11 2 0.5404763088546395)
     (17 11 0.8711164930263436)
@@ -757,18 +828,21 @@
 
 
 ;==== INTERFAZ PLOT 3D ====
+(plot-new-window? #f)
+(define plot-frame #f)
+(define plot-canvas #t)
+(define last-renderer3d #t)
+(define ANGULO 65)
+(define ALTITUD 20)
 
-; Convierte un árbol en una función de Racket f(x,y) -> z
-(define convertir-arbol-a-funcion
+(define convertir-arbol
   (lambda (arbol)
     (lambda (x y) (evalArbol arbol x y))))
 
-; Convierte '(x y z) -> #(x y z) para points3d
-(define pts->vectors
+(define pts-vectores
   (lambda (pts)
     (map (lambda (p) (vector (car p) (cadr p) (caddr p))) pts)))
 
-; Obtiene rangos [xmin xmax] y [ymin ymax] a partir de los puntos
 (define rangos-xy
   (lambda (pts)
     (values (apply min (map car pts))
@@ -776,113 +850,85 @@
             (apply min (map cadr pts))
             (apply max (map cadr pts)))))
 
-; Ventana persistente para graficar y reutilizar la misma pestaña
-(define plot-frame #f)
-(define plot-canvas #t)
-(define last-renderer3d #t)
-
 (define plot-canvas%
   (class canvas%
     (super-new)
     (define/override (on-paint)
       (when last-renderer3d
-        (define dc (send this get-dc))
-        (define w (send this get-width))
-        (define h (send this get-height))
-        (plot3d/dc last-renderer3d dc 0 0 w h)))))
+    (define dc (send this get-dc))
+    (define w (send this get-width))
+    (define h (send this get-height))
+    (plot3d/dc last-renderer3d dc 0 0 w h #:angle ANGULO #:altitude ALTITUD)))))
 
 (define ensure-plot-window
   (lambda ()
     (when (not plot-frame)
-      (set! plot-frame (new frame% [label "Elite 3D"] [width 600] [height 600]))
+      (set! plot-frame (new frame% [label "Elites 3D"] [width 700] [height 700]))
       (set! plot-canvas (new plot-canvas% [parent plot-frame]))
       (send plot-frame show #t))))
 
-; Grafica solo los puntos 3D en la ventana reutilizable
-(define graficar-puntos-3d
+(define graficar-puntos
   (lambda (pts)
     (ensure-plot-window)
-    (set! last-renderer3d (list (points3d (pts->vectors pts)
-                                          #:sym 'fullcircle #:size 6 #:color "blue")))
+    (set! last-renderer3d (list (points3d (pts-vectores pts) #:sym 'fullcircle #:size 6 #:color "red")))
     (send plot-canvas refresh)))
 
-; Grafica la superficie de un árbol y (opcionalmente) sobrepone puntos
-(define graficar-arbol-superficie
+(define graficar-func-arbol
   (lambda (arbol pts)
     (ensure-plot-window)
     (call-with-values
       (lambda () (rangos-xy pts))
       (lambda (xmin xmax ymin ymax)
         (set! last-renderer3d
-              (list (surface3d (convertir-arbol-a-funcion arbol)
-                               xmin xmax ymin ymax)
-                    (points3d (pts->vectors pts)
-                              #:sym 'fullcircle #:size 6 #:color "red")))
+              (list (surface3d (convertir-arbol arbol) xmin xmax ymin ymax #:color "Powder Blue" #:line-color "Violet")
+                    (points3d (pts-vectores pts) #:sym 'fullcircle #:size 6 #:color "red")))
         (send plot-canvas refresh)))))
 
-; Algoritmo genético con actualización de plot cada k generaciones
-(define algoritmo-genetico-con-plot
-  (lambda (PG n k pts)
-    (define resultado (box #f))
-    (define (actualizar-plot elite generacion)
-      (queue-callback
-       (lambda ()
-         (graficar-arbol-superficie elite pts)
-         (printf "[plot] gen ~a | cercania ~a\n" generacion (cercaniaXYZ elite)))
-       #t))
-    (define worker
-      (thread
-       (lambda ()
-         (let loop ([pg PG] [restantes n])
-           (define fits (get-fitness pg))
-           (define elite (escogerElite pg fits (apply max fits)))
-           (define generacion (- n restantes))
-           (when (or (zero? generacion) (zero? (remainder generacion k)))
-             (actualizar-plot elite generacion))
-           (cond
-             ((zero? restantes) (set-box! resultado elite))
-             ((>= 0.05 (cercaniaXYZ elite)) (set-box! resultado elite))
-             (else (loop (generar-descendencia (list elite) pg (- (length pg) 1) fits)
-                         (- restantes 1))))))))
-    (thread-wait worker)
-    (unbox resultado)))
+(define mostrar-res
+  (lambda (arbol pts)
+    (parameterize ([plot-new-window? #t]
+               [plot-width  (send plot-frame get-width)]
+               [plot-height (send plot-frame get-height)])
+      (call-with-values
+        (lambda () (rangos-xy pts))
+        (lambda (xmin xmax ymin ymax)
+          (plot3d (list (surface3d (convertir-arbol arbol) xmin xmax ymin ymax #:color "Powder Blue" #:line-color "Violet")
+                        (points3d (pts-vectores pts) #:sym 'fullcircle #:size 6 #:color "red"))
+                  #:angle ANGULO
+                  #:altitude ALTITUD))))))
 
-; Variante asíncrona: inicia el proceso y devuelve una caja con el resultado final cuando esté listo
-(define algoritmo-genetico-con-plot/async
+(define algoritmo-genetico-ui
+  (lambda (PG restantes n k actualizar-plot finalizar)
+    (define fits (obt-fitness PG))
+    (define elite (escogerElite PG fits (apply max fits)))
+    (define gene (- n restantes))
+    (when (or (zero? gene) (zero? (remainder gene k))) (actualizar-plot elite gene))
+    (cond
+      ((zero? restantes) (finalizar elite))
+      ((>= 0.05 (cercaniaXYZ elite)) (finalizar elite))
+      (else (algoritmo-genetico-ui
+             (generar-descendencia (list elite) PG (- (length PG) 1) fits)
+             (- restantes 1) n k actualizar-plot finalizar)))))
+
+(define interfaz-plot
   (lambda (PG n k pts)
     (define resultado (box #f))
-    (define (actualizar-plot elite generacion)
-      (queue-callback
-       (lambda ()
-         (graficar-arbol-superficie elite pts)
-         (printf "[plot-async] gen ~a | cercania ~a\n" generacion (cercaniaXYZ elite)))
-       #t))
-    (thread
-     (lambda ()
-       (let loop ([pg PG] [restantes n])
-         (define fits (get-fitness pg))
-         (define elite (escogerElite pg fits (apply max fits)))
-         (define generacion (- n restantes))
-         (when (or (zero? generacion) (zero? (remainder generacion k)))
-           (actualizar-plot elite generacion))
-         (cond
-           ((zero? restantes) (set-box! resultado elite))
-           ((>= 0.05 (cercaniaXYZ elite)) (set-box! resultado elite))
-           (else (loop (generar-descendencia (list elite) pg (- (length pg) 1) fits)
-                       (- restantes 1)))))))
+    (define actualizar-plot
+      (lambda (elite gene)
+        (queue-callback
+         (lambda ()
+           (graficar-func-arbol elite pts)
+           (set! ANGULO (+ ANGULO 15))
+           (send plot-canvas refresh)
+           (print "Cercania: ") (print (cercaniaXYZ elite)) (newline) (print "Elite: ") (print elite) (newline) (newline)) #t)))
+    (define finalizar
+      (lambda (elite)
+        (set-box! resultado elite)
+        (queue-callback (lambda () (mostrar-res elite pts)) #t)))
+    (thread (lambda () (algoritmo-genetico-ui PG n n k actualizar-plot finalizar)))
     resultado))
 
-
-;(graficar-puntos-3d pts)
-;(define gen (generarPoblacion 100))
-;(define mejor (algoritmo-genetico-con-plot gen 300 10 pts))
-
-; abrir/reusar ventana
-(graficar-puntos-3d pts)
-
-; correr en segundo plano, actualizando cada 10 gens
+(graficar-puntos pts)
 (define gen (generarPoblacion 100))
-(define res (algoritmo-genetico-con-plot/async gen 300 10 pts))
-(graficar-arbol-superficie res pts)
-; cuando termine:
+(define res (interfaz-plot gen 10000 10 pts))
 (unbox res)
