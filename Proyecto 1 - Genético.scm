@@ -4,7 +4,7 @@
 ;==== FUNCIONES AUXILIARES ====;
 ;--- Altura ---;
 ; Dominio: Un árbol.
-; Codominio: Un entero (altura del árbol).
+; Codominio: Un entero que representa la altura del árbol.
 (define altura
   (lambda (A)
     (cond
@@ -13,8 +13,8 @@
       (else (+ 1 (max (altura (cadr A)) (altura (caddr A))))))))
 
 ;--- Nivel ---;
-; Dominio: Un árbol y un entero n (nivel).
-; Codominio: Un conjunto de nodos.
+; Dominio: Un árbol y un entero n nivel.
+; Codominio: Un conjunto de nodos en n nivel.
 (define nivel
   (lambda (A n)
     (cond
@@ -26,7 +26,7 @@
 
 ;--- Elemento en Índice ---;
 ; Dominio: Una lista y un entero n.
-; Codominio: Un valor de la lista.
+; Codominio: EL valor de la lista en el índice n.
 (define elementoEn
   (lambda (L n)
     (cond
@@ -35,7 +35,7 @@
 
 ;--- Pop ---;
 ; Dominio: Una lista.
-; Codominio: Una lista sin el último elemento.
+; Codominio: La misma lista sin el último elemento.
 (define pop
   (lambda (L)
     (cond
@@ -172,7 +172,7 @@
                     (cons '** expValida)))
 
 ;--- Operaciones Posibles ---;
-(define opsPosibles (map (lambda(i) (cdr i)) opsValidas)) ;Lista de funciones
+(define opsPosibles (map (lambda(i) (cdr i)) opsValidas))
 
 ;--- Cota de error ---;
 (define COTA_ERROR 1.0e7)
@@ -219,7 +219,7 @@
       (else (evalOps-aux (apply op paramOp))))))
 
 ;--- Eval árbol ---;
-; Dominio: Un árbol de operaciones y dos números reales x e y.
+; Dominio: Un árbol de expresión y dos números reales x e y.
 ; Codominio: Un número real resultante de evaluar el árbol.
 (define evalArbol
   (lambda (arbol x y)
@@ -234,7 +234,7 @@
 
 ;==== PROCESO GENÉTICO ====;
 ;--- Cercania XYZ ---;
-; Dominio: Un árbol de operaciones A.
+; Dominio: Un árbol de expresión A.
 ; Codominio: Un número real que representa la cercanía o COTA_ERROR.
 (define cercaniaXYZ
   (lambda (A)
@@ -268,7 +268,7 @@
 
 ;--- Escoger élite ---;
 ; Dominio: Una lista de individuos S, una lista de valores de fitness F y un número real max.
-; Codominio: Un individuo de la lista S.
+; Codominio: El individuo élite de la lista S.
 (define escogerElite
   (lambda (S F max)
     (cond
@@ -442,7 +442,7 @@
 
 ;--- Cruce con altura balanceada ---;
 ; Dominio: Dos árboles A y B.
-; Codominio: Un árbol resultado del cruce de A y B.
+; Codominio: Un árbol de la misma altura resultado del cruce de A y B.
 (define cruce-balanceado
   (lambda (A B)
     (cond
@@ -473,8 +473,8 @@
       (else (mezclar-arboles-aux A B)) )))
 
 ;--- Cruces aux ---;
-; Dominio: Un árbol cruce y un valor-cruce numérico.
-; Codominio: Un árbol cruce posiblemente mutado o supermutado.
+; Dominio: Un árbol cruce y un número valor-cruce.
+; Codominio: Un árbol cruce mutado, supermutado o sin mutar.
 (define cruces-aux
   (lambda (cruce valor-cruce)
     (cond
@@ -515,7 +515,6 @@
     (else (selectIndiv (cdr genActual) (cdr listaInterv) rand)))))
 
 
-
 ;==== GENERACIÓN DE ÁRBOLES ====;
 ;--- Hoja aleatoria ---;
 ; Dominio: Un número real p.
@@ -523,11 +522,11 @@
 (define hoja-aleatoria
   (lambda (p)
     (cond
-        ((< p 0.33334) (realPositiveRand) )
+        ((< p 0.33334) (realPositiveRand))
         ((< p 0.66667) 'x)
         (else 'y))))
 
-;--- Arbol altura n ---;
+;--- Árbol altura n ---;
 ; Dominio: Un número entero n (altura del árbol).
 ; Codominio: Un árbol de altura n con hojas aleatorias.
 (define arbol-altura-n 
@@ -536,7 +535,7 @@
       ((zero? n) (hoja-aleatoria (realRand)))
       (else (list (elementoEn opsPosibles (random (length opsPosibles))) (arbol-altura-n (- n 1)) (arbol-altura-n (- n 1)))))))
 
-;--- Arbol aleatorio ---;
+;--- Árbol aleatorio ---;
 ; Dominio: Dos números enteros n (cantidad de subárboles) y m (altura máxima).
 ; Codominio: Un árbol aleatorio con n subárboles de altura ≤ m.
 (define arbol-aleatorio
@@ -558,7 +557,7 @@
 
 ;--- Mejor individuo Gen ---;
 ; Dominio: Una lista genActual de árboles y una lista de valores de fitness fits.
-; Codominio: Una lista con el árbol más apto (elite) de genActual.
+; Codominio: Una lista con el árbol elite de genActual.
 (define mejorGen
   (lambda (genActual fits)
     ;(print "Cerc") (print (map (lambda (ind) (cercaniaXYZ ind)) genActual)) (newline) (newline)
@@ -567,18 +566,18 @@
     (list (escogerElite genActual fits (apply max fits)) )))
 
 ;--- Generar descendencia aux---;
-; Dominio: Una lista de árboles descendencia, lista de árboles padres, número entero n, lista de números reales entre 0 y 1 inclusivo fits y un árbol cruce.
-; Codominio: Una lista de árboles.
+; Dominio: Una lista de árboles descendencia, lista de árboles padres, número entero n, lista de números reales entre [0,1] fits y un árbol cruce.
+; Codominio: Una lista de árboles representando la nueva descendencia.
 (define generar-descendencia-aux
-  (lambda(DES P n fits cruce)
+  (lambda (DES P n fits cruce)
   (cond
   ((zero? n) DES)
   ((member cruce DES equal?) (generar-descendencia-aux DES P n fits (cruces (selectIndiv P (selectIntervalo fits 0) (random)) (selectIndiv P (selectIntervalo fits 0) (random)))))
   (else (cons cruce (generar-descendencia-aux DES P (- n 1) fits (cruces (selectIndiv P (selectIntervalo fits 0) (random)) (selectIndiv P (selectIntervalo fits 0) (random))) ))))))
 
 ;--- Generar descendencia ---;
-; Dominio: Una lista de árboles descendencia, lista de árboles padres, número entero n, lista de números reales entre 0 y 1 inclusivo fits.
-; Codominio: Una lista de árboles.
+; Dominio: Una lista de árboles descendencia, lista de árboles padres, número entero n, lista de números reales entre [0,1] fits.
+; Codominio: Una lista de árboles representando la nueva descendencia.
 (define generar-descendencia
   (lambda (DES P n fits)
     (generar-descendencia-aux DES P n fits 
@@ -586,7 +585,7 @@
 
 ;--- Obtener fitness ---;
 ; Dominio: Lista de árboles de alguna generación.
-; Codominio: Lista de números reales entre 0 y 1 inclusivo.
+; Codominio: Lista de números reales entre [0,1].
 (define obt-fitness
   (lambda (PG)
       (fitness (map (lambda (ind) (cercaniaXYZ ind)) PG)
@@ -594,9 +593,9 @@
 
 ;--- Algoritmo Genético ---;
 ; Dominio: Lista de árboles de una generación, número entero n.
-; Codominio: Un árbol.
+; Codominio: Un árbol representando la función aproximada.
 (define algoritmo-genetico
-  (lambda(PG n)
+  (lambda (PG n)
   (cond
   ;((zero? n) (print "fin-gen") (newline) (car (mejorGen PG (obt-fitness PG))))
   ((>= 0.05 (cercaniaXYZ (car (mejorGen PG (obt-fitness PG) )))) (car (mejorGen PG (obt-fitness PG))))
@@ -658,7 +657,7 @@
     (2 11 -0.011618783380305042)
     (19 5 581.8154927034864)))
 
-(define pts3
+(define pts
   '((7 19 0.021467462815455557)
     (15 5 0.8972897520305314)
     (3 12 0.034300505648069725)
@@ -742,7 +741,7 @@
     (13 5 18)
     (12 6 18)))
 
-(define pts
+(define pts5
   '((6 10 -64)
     (6 9 -45)
     (19 9 280)
@@ -853,8 +852,7 @@
 (define plot-canvas%
   (class canvas%
     (super-new)
-    (define/override (on-paint)
-      (when last-renderer3d
+    (define/override (on-paint) (when last-renderer3d
     (define dc (send this get-dc))
     (define w (send this get-width))
     (define h (send this get-height))
@@ -904,7 +902,7 @@
     (define gene (- n restantes))
     (when (or (zero? gene) (zero? (remainder gene k))) (actualizar-plot elite gene))
     (cond
-      ((zero? restantes) (finalizar elite))
+      ;((zero? restantes) (finalizar elite))
       ((>= 0.05 (cercaniaXYZ elite)) (finalizar elite))
       (else (algoritmo-genetico-ui
              (generar-descendencia (list elite) PG (- (length PG) 1) fits)
@@ -930,5 +928,5 @@
 
 (graficar-puntos pts)
 (define gen (generarPoblacion 100))
-(define res (interfaz-plot gen 10000 10 pts))
+(define res (interfaz-plot gen 0 10 pts))
 (unbox res)
