@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.TextField?>
+
+<VBox alignment="CENTER" spacing="20.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="ecr.ac.tec.lenguajes.pokerGUI.controller.FXMLMenuController" styleClass="main-container">
+
+    <Label text="POKER HORSE" styleClass="header-label"/>
+    
+    <TextField fx:id="nameField" promptText="Enter your name" maxWidth="200"/>
+    <TextField fx:id="ipField" promptText="Enter server IP (df: localhost)" maxWidth="200"/>
+    
+    <Button text="Start Game" onAction="#handleStartGame"/>
+    <Button text="Exit" onAction="#handleExit"/>
+</VBox>

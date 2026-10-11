@@ -1,0 +1,157 @@
+/* root */
+.root {
+    -fx-font-family: 'Segoe UI', sans-serif;
+    -fx-background-color: #1e1e1e;
+}
+
+/* buttons */
+.button {
+    -fx-background-color: #d4af37;
+    -fx-text-fill: #1e1e1e;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-padding: 10 20;
+    -fx-background-radius: 5;
+    -fx-cursor: hand;
+}
+
+.button:hover {
+    -fx-background-color: #f0c448;
+}
+
+.button:pressed {
+    -fx-background-color: #b3922b;
+}
+
+/* labels */
+.label {
+    -fx-text-fill: #ffffff;
+}
+
+.status-label {
+    -fx-text-fill: white;
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+}
+
+.game-type-label {
+    -fx-text-fill: white;
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+}
+
+.opponent-label {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-color: rgba(0, 0, 0, 0.5);
+    -fx-padding: 5 10;
+    -fx-background-radius: 10;
+    -fx-font-size: 14px;
+}
+
+.header-label {
+    -fx-font-size: 36px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #d4af37;
+}
+
+.action-label {
+    -fx-text-fill: #efefef;
+    -fx-font-size: 14px;
+    -fx-font-style: italic bold;
+    -fx-padding: 0 5;
+}
+
+/* containers */
+.main-container {
+    -fx-background-color: #1a1a1a;
+    -fx-padding: 30;
+}
+
+.table-container {
+    -fx-background-color: #35654d;
+    -fx-background-radius: 250;
+    -fx-max-width: 700;
+    -fx-max-height: 380;
+}
+
+.control-bar {
+    -fx-padding: 20;
+}
+
+/* card fallback */
+.card-label-fallback {
+    -fx-text-fill: white;
+    -fx-font-size: 18px;
+    -fx-border-color: white;
+    -fx-padding: 5;
+}
+
+.card-placeholder {
+    -fx-border-color: #d4af37;
+    -fx-border-width: 3;
+    -fx-border-radius: 8;
+    -fx-text-fill: #d4af37;
+    -fx-padding: 30;
+    -fx-font-size: 20px;
+}
+
+/* text fields */
+.text-field {
+    -fx-background-color: #333333;
+    -fx-text-fill: white;
+    -fx-prompt-text-fill: #aaaaaa;
+    -fx-background-radius: 5;
+    -fx-padding: 8;
+    -fx-font-size: 14px;
+}
+
+.text-field:focused {
+    -fx-background-color: #444444;
+    -fx-border-color: #d4af37;
+    -fx-border-radius: 5;
+}
+
+.active-turn {
+    -fx-effect: dropshadow(three-pass-box, #d4af37, 10, 0.5, 0, 0);
+    -fx-border-color: #d4af37;
+    -fx-border-width: 2;
+    -fx-border-radius: 10;
+    -fx-padding: 5 10;
+}
+
+/* role chips */
+.role-token {
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+    -fx-padding: 5;
+    -fx-background-radius: 50%;
+    -fx-min-width: 30px;
+    -fx-min-height: 30px;
+    -fx-alignment: center;
+    -fx-text-alignment: center;
+}
+
+.role-dealer {
+    -fx-background-color: white;
+    -fx-text-fill: black;
+    -fx-border-color: black;
+    -fx-border-width: 2;
+    -fx-border-radius: 50%;
+}
+
+.role-sb {
+    -fx-background-color: #6495ED;
+    -fx-text-fill: white;
+    -fx-border-color: white;
+    -fx-border-width: 1;
+    -fx-border-radius: 50%;
+}
+
+.role-bb {
+    -fx-background-color: #FFA500;
+    -fx-text-fill: black;
+    -fx-border-color: white;
+    -fx-border-width: 1;
+    -fx-border-radius: 50%;
+}
