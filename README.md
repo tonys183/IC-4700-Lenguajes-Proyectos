@@ -1,5 +1,19 @@
 # IC-4700 — Lenguajes de Programación
 
+<p align="center">🧩</p>
+
+<p align="center">
+  <img alt="Racket" src="https://img.shields.io/badge/Racket-9F1D20?style=flat-square">
+  <img alt="Prolog" src="https://img.shields.io/badge/Prolog-E61B23?style=flat-square">
+  <img alt="Erlang" src="https://img.shields.io/badge/Erlang-A90533?style=flat-square">
+  <img alt="Java" src="https://img.shields.io/badge/Java-ED8B00?style=flat-square">
+  <img alt="C" src="https://img.shields.io/badge/C-555555?style=flat-square">
+</p>
+
+<p align="center">
+  <a href="#proyecto-i-programación-genética">Proyecto I</a> · <a href="#proyecto-ii-mastermind">Proyecto II</a> · <a href="#proyecto-iii-motor-de-póker-horse">Proyecto III</a>
+</p>
+
 Proyectos del curso Lenguajes de Programación (IC-4700), desarrollados con Racket/Scheme, Prolog, Erlang, Java y C. Los trabajos exploran distintos paradigmas y la integración de lenguajes para resolver problemas de búsqueda, generación de funciones y juegos.
 
 ## Proyecto I (Programación genética)
