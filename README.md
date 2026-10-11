@@ -1,12 +1,12 @@
 # IC-4700 — Lenguajes de Programación
 
 <p align="center">
-  <img alt="Racket" src="https://img.shields.io/badge/Racket-9F1D20?style=flat-square&logo=racket&logoColor=white">
-  <img alt="Prolog" src="https://img.shields.io/badge/Prolog-E61B23?style=flat-square">
-  <img alt="Erlang" src="https://img.shields.io/badge/Erlang-A90533?style=flat-square&logo=erlang&logoColor=white">
-  <img alt="Java" src="https://img.shields.io/badge/Java-ED8B00?style=flat-square&logo=openjdk&logoColor=white">
-  <img alt="C" src="https://img.shields.io/badge/C-555555?style=flat-square&logo=c&logoColor=white">
-  <a href="LICENSE"><img alt="Licencia GPL-3.0" src="https://img.shields.io/github/license/tonys183/IC-4700-Lenguajes-Proyectos?style=flat-square&label=Licencia&logo=opensourceinitiative&logoColor=white"></a>
+  <img alt="Racket" src="https://img.shields.io/badge/Racket-9F1D20?style=plastic&logo=racket&logoColor=white">
+  <img alt="Prolog" src="https://img.shields.io/badge/-Prolog-CA4245?style=plastic">
+  <img alt="Erlang" src="https://img.shields.io/badge/Erlang-A90533?style=plastic&logo=erlang&logoColor=white">
+  <img alt="Java" src="https://img.shields.io/badge/Java-ED8B00?style=plastic&logo=openjdk&logoColor=white">
+  <img alt="C" src="https://img.shields.io/badge/C-555555?style=plastic&logo=c&logoColor=white">
+  <a href="LICENSE"><img alt="Licencia GPL-3.0" src="https://img.shields.io/github/license/tonys183/IC-4700-Lenguajes-Proyectos?style=plastic&label=Licencia&logo=opensourceinitiative&logoColor=white"></a>
 </p>
 
 <p align="center">
